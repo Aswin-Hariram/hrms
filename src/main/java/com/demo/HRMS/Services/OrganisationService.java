@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.Map;
 
 @Service
@@ -151,9 +152,21 @@ public class OrganisationService {
     public ResponseEntity<?> createEmployee(EmployeeEntity request){
 
         if(emp_repo.existsByEmpEmail(request.getEmpEmail())){
-
+            throw new DataIntegrityViolationException("Employee already exists with same email address");
+        }
+        if (!EnumSet.of(
+                EmployeeRole.SUPER_ADMIN,
+                EmployeeRole.HR
+        ).contains(request.getEmpRole())) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "status","failed",
+                            "message","invalid role"
+                    )
+            );
         }
         request.setEmpPassword(request.getEmpFirstName()+request.getEmpPhoneNumber());
+        request.setDefaultPasswordUpdated(false);
 
         if(emp_repo.existsByEmpEmail(request.getEmpEmail())){
            throw new DataIntegrityViolationException("Employee with same email already exists");
