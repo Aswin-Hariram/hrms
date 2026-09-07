@@ -47,7 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
         Long empId = jwtService.extractID(token);
-
         String role = jwtService.extractRole(token);
 
 

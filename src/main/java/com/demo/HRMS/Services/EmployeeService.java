@@ -6,6 +6,7 @@ import com.demo.HRMS.DTO.Employee.EmployeeResetPassword;
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Security.JwtService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,78 +33,69 @@ public class EmployeeService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 
-    public ResponseEntity<Map<String,String>> reset(EmployeeResetPassword request){
+    @Transactional
+    public void reset(EmployeeResetPassword request) {
 
-        if(!emp_repo.existsByEmpEmail(request.getEmpEmail())){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(
-                            "Message","Email not found"
-                    ));
-        }
-
-
-        EmployeeEntity emp = emp_repo.findByEmpEmail(request.getEmpEmail()
-        ).orElseThrow(()->
-                new RuntimeException("Invalid email or password")
-        );
-        if(!passwordEncoder.matches(request.getEmpPassword(),emp.getEmpPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of(
-                            "Message","Incorrect Password"
-                    ));
-        }
-        emp.setEmpPassword(passwordEncoder.encode(request.getEmpNewPassword()));
-        emp.setDefaultPasswordUpdated(true);
-        emp_repo.save(emp);
-
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(Map.of(
-                        "Message","Password updated successfully"
-                ));
-    }
-
-    public ResponseEntity<?> login(EmployeeLoginRequest request){
-
-        EmployeeEntity employee = emp_repo
-                .findByEmpEmail(request.getEmpEmail())
+        EmployeeEntity emp = emp_repo
+                .findByEmpEmailAndOrganisation_OrgID(
+                        request.getEmpEmail(),
+                        request.getOrgID()
+                )
                 .orElseThrow(() ->
-                        new RuntimeException("Invalid email or password")
+                        new RuntimeException(
+                                "Invalid email or organisation ID"
+                        )
                 );
+
         if (!passwordEncoder.matches(
                 request.getEmpPassword(),
-                employee.getEmpPassword())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    Map.of(
-                            "Status", "Login Failed",
-                            "Message", "Invalid email or password"
-                    )
+                emp.getEmpPassword()
+        )) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        emp.setEmpPassword(
+                passwordEncoder.encode(request.getEmpNewPassword())
+        );
+
+        emp.setDefaultPasswordUpdated(true);
+        emp.setEmpStatus("Active");
+
+        emp_repo.save(emp);
+    }
+
+    public Map<String, Object> login(EmployeeLoginRequest request) {
+
+        EmployeeEntity employee = emp_repo.findByEmpEmailAndOrganisation_OrgID(
+                        request.getEmpEmail(),
+                        request.getOrgID()
+                ).orElseThrow(() ->
+                        new RuntimeException("Invalid email or password")
+                );
+
+        if (!passwordEncoder.matches(request.getEmpPassword(), employee.getEmpPassword())) {
+
+            throw new RuntimeException("Invalid email or password");
+        }
+
+        if ("INACTIVE".equalsIgnoreCase(employee.getEmpStatus())) {
+            throw new RuntimeException(
+                    "Request your HR to update your status"
             );
         }
 
-        if (employee.getEmpStatus().equals("INACTIVE")) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    Map.of(
-                            "Status", "Login Failed",
-                            "Message", "Request your HR to update your Status"
-                    )
-            );
-        }
         if (!employee.isDefaultPasswordUpdated()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    Map.of(
-                            "Status", "Login Failed",
-                            "Message", "Reset Default Password before login"
-                    )
+            throw new RuntimeException(
+                    "Reset default password before login"
             );
         }
+
         String token = jwtService.genToken(employee);
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "message", "Login successful",
-                        "token", token,
-                        "empId", employee.getEmpID()
-                )
+        return Map.of(
+                "message", "Login successful",
+                "token", token,
+                "empId", employee.getEmpID()
         );
     }
 

@@ -75,7 +75,7 @@ public class OrganisationService {
         superAdmin.setEmpJoiningDate(LocalDate.now());
 
         superAdmin.setEmpType("ADMIN");
-        superAdmin.setEmpStatus("ACTIVE");
+        superAdmin.setEmpStatus("NOT ACTIVE");
         superAdmin.setEmpRole(EmployeeRole.SUPER_ADMIN);
 
         emp_repo.save(superAdmin);
@@ -85,8 +85,8 @@ public class OrganisationService {
 
         return Map.of(
                 "Status","Successful",
-                "Organisation detail", organisation,
-                "Admin Details", Map.of(
+                "org_details", organisation,
+                "admin_details", Map.of(
                         "email", superAdmin.getEmpEmail(),
                         "role", superAdmin.getEmpRole(),
                         "status", superAdmin.getEmpStatus(),

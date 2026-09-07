@@ -6,8 +6,11 @@ import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Services.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 @RestController
@@ -20,16 +23,26 @@ public class EmployeeController {
     private EmployeeService empService;
 
     @PostMapping("/reset")
-    public ResponseEntity<?> restPassword(@RequestBody @Valid EmployeeResetPassword request){
-        return empService.reset(request);
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @RequestBody @Valid EmployeeResetPassword request) {
+
+        empService.reset(request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(Map.of(
+                        "Message",
+                        "Password updated successfully"
+                ));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(
+    public ResponseEntity<Map<String, Object>> login(
             @Valid @RequestBody EmployeeLoginRequest request) {
 
-        return empService.login(request);
+        Map<String, Object> response = empService.login(request);
 
+        return ResponseEntity.ok(response);
     }
 
 

@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
                         errors.put(error.getField(), error.getDefaultMessage())
                 );
 
-        return ResponseEntity.badRequest().body(errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
 
@@ -55,6 +55,19 @@ public class GlobalExceptionHandler {
 
         response.put("status", "Error");
         response.put("message", "Invalid data type. Please check your request fields.");
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntimeException(
+            RuntimeException ex) {
+
+        Map<String, String> response = new HashMap<>();
+
+        response.put("status", "Error");
+        response.put("message", ex.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

@@ -9,7 +9,9 @@ import com.demo.HRMS.Repositories.DepartmentRepository;
 import com.demo.HRMS.Services.OrganisationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -18,8 +20,11 @@ import java.util.Map;
 @RequestMapping("/api/organisation")
 public class OrganisationController {
 
-    @Autowired
-    private OrganisationService orgService;
+
+    private final OrganisationService orgService;
+    public OrganisationController(OrganisationService orgService) {
+        this.orgService = orgService;
+    }
 
 
 
@@ -38,12 +43,11 @@ public class OrganisationController {
 
 
         request.setOrgStatus("Not Activated");
-        return ResponseEntity.ok(orgService.register(request));
-
-
-
+        return ResponseEntity.status(HttpStatus.CREATED).body(orgService.register(request));
     }
 
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("/addDepartment")
     public ResponseEntity<?> addDepartment(@RequestBody @Valid DepartmentEntity request){
 
