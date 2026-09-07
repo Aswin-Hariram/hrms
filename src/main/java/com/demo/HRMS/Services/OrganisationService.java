@@ -1,6 +1,7 @@
 package com.demo.HRMS.Services;
 
 
+import com.demo.HRMS.DTO.Employee.CreateEmployeeRequestDTO;
 import com.demo.HRMS.EmployeeRole;
 import com.demo.HRMS.Entities.DepartmentEntity;
 import com.demo.HRMS.Entities.DesignationEntity;
@@ -149,30 +150,62 @@ public class OrganisationService {
         );
     }
     //Create Employee
-    public ResponseEntity<?> createEmployee(EmployeeEntity request){
+    public Map<String,Object> createEmployee(CreateEmployeeRequestDTO request){
 
-        if(emp_repo.existsByEmpEmail(request.getEmpEmail())){
-            throw new DataIntegrityViolationException("Employee already exists with same email address");
-        }
+        if (emp_repo.existsByEmpEmail(request.getEmpEmail())) {
+            throw new DataIntegrityViolationException(
+                    "Employee already exists with same email address"
+
+            );
+        };
         if (!EnumSet.of(
                 EmployeeRole.SUPER_ADMIN,
                 EmployeeRole.HR
         ).contains(request.getEmpRole())) {
-            return ResponseEntity.badRequest().body(
+            return
                     Map.of(
                             "status","failed",
                             "message","invalid role"
-                    )
-            );
+                    );
         }
-        request.setEmpPassword(request.getEmpFirstName()+request.getEmpPhoneNumber());
-        request.setDefaultPasswordUpdated(false);
+        OrganisationEntity organisation = org_repo.getReferenceById(request.getOrgID());
+        DesignationEntity designation = null;
 
-        if(emp_repo.existsByEmpEmail(request.getEmpEmail())){
-           throw new DataIntegrityViolationException("Employee with same email already exists");
+        if (request.getDesignationId() != null) {
+            designation = desg_repo.getReferenceById(request.getDesignationId());
+        }
+        DepartmentEntity department = null;
+
+        if (request.getDepartmentId() != null) {
+            department = dep_repo.getReferenceById(request.getDepartmentId());
         }
 
-        return ResponseEntity.ok().body(request);
+
+        EmployeeEntity employee = EmployeeEntity.builder()
+                .organisation(organisation)
+                .empFirstName(request.getEmpFirstName())
+                .empLastName(request.getEmpLastName())
+                .empEmail(request.getEmpEmail())
+                .empPhoneNumber(request.getEmpPhoneNumber())
+                .empPassword(
+                        request.getEmpFirstName()
+                                + request.getEmpPhoneNumber()
+                )
+                .empDOB(request.getEmpDOB())
+                .age(request.getAge())
+                .empJoiningDate(request.getEmpJoiningDate())
+                .empType(request.getEmpType())
+                .empStatus(request.getEmpStatus())
+                .designation(designation)
+                .department(department)
+                .empRole(request.getEmpRole())
+                .defaultPasswordUpdated(false)
+                .build();
+
+        EmployeeEntity savedEmployee = emp_repo.save(employee);
+
+
+        return Map.of("message","Success","data",savedEmployee);
 
     }
 

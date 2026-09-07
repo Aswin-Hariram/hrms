@@ -1,6 +1,7 @@
 package com.demo.HRMS.Controllers;
 
 
+import com.demo.HRMS.DTO.Employee.CreateEmployeeRequestDTO;
 import com.demo.HRMS.Entities.DepartmentEntity;
 import com.demo.HRMS.Entities.DesignationEntity;
 import com.demo.HRMS.Entities.EmployeeEntity;
@@ -62,11 +63,11 @@ public class OrganisationController {
     }
 
     @PostMapping("/createEmployee")
-    public ResponseEntity<?> createEmployee(@RequestBody @Valid EmployeeEntity request){
+    public ResponseEntity<?> createEmployee(
+            @RequestBody @Valid CreateEmployeeRequestDTO request) {
 
-
-        return orgService.createEmployee(request);
-
+        Map<String,Object> response = orgService.createEmployee(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 

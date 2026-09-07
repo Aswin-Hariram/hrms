@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "Employee")
 public class EmployeeEntity {
     @Id
@@ -27,7 +29,7 @@ public class EmployeeEntity {
     private Long empID;
 
     @ManyToOne
-    @JoinColumn(name = "org_id", nullable = false)
+    @JoinColumn(name = "orgID", nullable = false)
     private OrganisationEntity organisation;
 
     @Column(nullable = false)
@@ -72,7 +74,7 @@ public class EmployeeEntity {
     private DesignationEntity designation;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "departmentID", nullable = true)
+    @JoinColumn(name = "departmentId", nullable = true)
     private DepartmentEntity department;
 
     @Enumerated(EnumType.STRING)
