@@ -54,6 +54,7 @@ public class OrganisationController {
         return orgService.creatDepartment(request);
 
     }
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("/addDesignation")
     public ResponseEntity<?> addDesignation(@RequestBody @Valid DesignationEntity request){
 

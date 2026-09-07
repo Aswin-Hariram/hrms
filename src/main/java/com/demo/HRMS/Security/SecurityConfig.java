@@ -28,7 +28,7 @@ public class SecurityConfig  {
                             )
                             .permitAll()
                             .requestMatchers(
-                                    "/api/organisation/addDesignation",
+
                                     "/api/organisation/createEmployee"
 
                             )
