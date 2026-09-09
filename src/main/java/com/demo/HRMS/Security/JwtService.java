@@ -2,12 +2,14 @@ package com.demo.HRMS.Security;
 
 
 import com.demo.HRMS.Entities.EmployeeEntity;
+import com.demo.HRMS.Repositories.EmployeeRepository;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,10 @@ public class JwtService {
     private  final  long EXPIRATION = 1000*60 * 60*24;
 
 
+
+
+
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(
                 SECRET.getBytes(StandardCharsets.UTF_8)
@@ -38,7 +44,6 @@ public class JwtService {
                 .builder()
                 .claim("emp_id",employee.getEmpID())
                 .claim("org_id",employee.getOrganisation().getOrgID())
-                .claim("emp_role",employee.getEmpRole().name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+EXPIRATION))
                 .signWith(getSigningKey())
@@ -64,6 +69,12 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("emp_role",String.class);
+    }
+    public Long extractOrg(String token){
+        return  Jwts.parser().verifyWith(getSigningKey()).build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("org_id",Long.class);
     }
 
     public Long extractID(String token){

@@ -16,6 +16,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Map<String, String>> handleValidation(
@@ -40,7 +42,7 @@ public class GlobalExceptionHandler {
         Map<String, String> response = new HashMap<>();
 
         response.put("status", "Error");
-        response.put("message", ex.getLocalizedMessage());
+        response.put("message", "Data already exists");
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)

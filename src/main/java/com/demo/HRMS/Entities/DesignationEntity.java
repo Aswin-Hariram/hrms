@@ -3,13 +3,13 @@ package com.demo.HRMS.Entities;
 
 
 import com.demo.HRMS.Entities.OrganisationEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class DesignationEntity {
 
     @Id
@@ -35,7 +36,15 @@ public class DesignationEntity {
 
     @ManyToOne(fetch=FetchType.LAZY,optional = false)
     @JoinColumn(name="orgID", nullable = false)
+    @JsonBackReference
     private OrganisationEntity organisation;
+
+    @ManyToOne(fetch=FetchType.LAZY,optional = false)
+    @JoinColumn(name="departmentId", nullable = false)
+    @JsonBackReference
+    private DepartmentEntity department;
+
+
 
 
     @CreationTimestamp

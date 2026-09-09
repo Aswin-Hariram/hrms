@@ -51,6 +51,8 @@ public class CreateEmployeeRequestDTO {
 
     private Long departmentId;
 
+    private Long reportToHr;
+
     @NotNull(message = "Employee role is required")
     private EmployeeRole empRole;
 }

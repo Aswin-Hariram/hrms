@@ -48,27 +48,10 @@ public class OrganisationController {
     }
 
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PostMapping("/addDepartment")
-    public ResponseEntity<?> addDepartment(@RequestBody @Valid DepartmentEntity request){
+//    @PostMapping("/assignReportTo")
 
-        return orgService.creatDepartment(request);
 
-    }
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PostMapping("/addDesignation")
-    public ResponseEntity<?> addDesignation(@RequestBody @Valid DesignationEntity request){
 
-       return orgService.creatDesignation(request);
-    }
-
-    @PostMapping("/createEmployee")
-    public ResponseEntity<?> createEmployee(
-            @RequestBody @Valid CreateEmployeeRequestDTO request) {
-
-        Map<String,Object> response = orgService.createEmployee(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
 
 
 }

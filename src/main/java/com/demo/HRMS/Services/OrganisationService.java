@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,95 +119,8 @@ public class OrganisationService {
     }
 
 
-    //Create Designation
-    @Transactional
-    public ResponseEntity<?> creatDesignation(DesignationEntity request) {
-
-        Long orgId = request.getOrganisation().getOrgID();
-
-        OrganisationEntity organisation = org_repo.findById(orgId)
-                .orElseThrow(() ->
-                        new RuntimeException("Organisation not found")
-                );
-
-        if (desg_repo.existsByDesignationNameAndOrganisation_OrgID(
-                request.getDesignationName(),
-                orgId
-        )) {
-            throw new DataIntegrityViolationException(
-                    "Designation already exists in this organisation"
-            );
-        }
-
-        request.setOrganisation(organisation);
-
-        DesignationEntity savedDesignation = desg_repo.save(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                Map.of(
-                        "message", "Successful",
-                        "designationID", savedDesignation.getDesignationId()
-                )
-        );
-    }
-    //Create Employee
-    public Map<String,Object> createEmployee(CreateEmployeeRequestDTO request){
-
-        if (emp_repo.existsByEmpEmail(request.getEmpEmail())) {
-            throw new DataIntegrityViolationException(
-                    "Employee already exists with same email address"
-
-            );
-        };
-        if (!EnumSet.of(
-                EmployeeRole.SUPER_ADMIN,
-                EmployeeRole.HR
-        ).contains(request.getEmpRole())) {
-            return
-                    Map.of(
-                            "status","failed",
-                            "message","invalid role"
-                    );
-        }
-        OrganisationEntity organisation = org_repo.getReferenceById(request.getOrgID());
-        DesignationEntity designation = null;
-
-        if (request.getDesignationId() != null) {
-            designation = desg_repo.getReferenceById(request.getDesignationId());
-        }
-        DepartmentEntity department = null;
-
-        if (request.getDepartmentId() != null) {
-            department = dep_repo.getReferenceById(request.getDepartmentId());
-        }
 
 
-        EmployeeEntity employee = EmployeeEntity.builder()
-                .organisation(organisation)
-                .empFirstName(request.getEmpFirstName())
-                .empLastName(request.getEmpLastName())
-                .empEmail(request.getEmpEmail())
-                .empPhoneNumber(request.getEmpPhoneNumber())
-                .empPassword(
-                        request.getEmpFirstName()
-                                + request.getEmpPhoneNumber()
-                )
-                .empDOB(request.getEmpDOB())
-                .age(request.getAge())
-                .empJoiningDate(request.getEmpJoiningDate())
-                .empType(request.getEmpType())
-                .empStatus(request.getEmpStatus())
-                .designation(designation)
-                .department(department)
-                .empRole(request.getEmpRole())
-                .defaultPasswordUpdated(false)
-                .build();
-
-        EmployeeEntity savedEmployee = emp_repo.save(employee);
-
-
-        return Map.of("message","Success","data",savedEmployee);
-
-    }
 
 }
+

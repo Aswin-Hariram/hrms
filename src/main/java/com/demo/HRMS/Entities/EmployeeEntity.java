@@ -28,7 +28,7 @@ public class EmployeeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long empID;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "orgID", nullable = false)
     private OrganisationEntity organisation;
 
@@ -67,6 +67,10 @@ public class EmployeeEntity {
 
     @Column(nullable = false)
     private String empStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY,optional = true)
+    @JoinColumn(name = "reportToHr",nullable = true)
+    private EmployeeEntity reportToHr;
 
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
