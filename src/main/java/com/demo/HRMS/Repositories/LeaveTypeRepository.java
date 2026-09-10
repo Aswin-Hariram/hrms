@@ -13,5 +13,5 @@ public interface LeaveTypeRepository extends JpaRepository<LeaveTypeEntity,Long>
     List<LeaveTypeEntity> findByOrganisation_OrgID(Long organisationOrgID);
 
     Optional<LeaveTypeEntity> findByOrganisation_OrgIDAndLeaveId(Long organisationOrgID, Long leaveId);
-
+    boolean existsByOrganisation_OrgIDAndLeaveNameIgnoreCase(Long orgId, String leaveName);
 }

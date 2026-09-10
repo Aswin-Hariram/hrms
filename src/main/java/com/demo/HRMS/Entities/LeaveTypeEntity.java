@@ -2,6 +2,7 @@ package com.demo.HRMS.Entities;
 
 import com.demo.HRMS.Types.LeaveTypesCodes;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,9 +39,10 @@ public class LeaveTypeEntity {
     private OrganisationEntity organisation;
 
     @NotNull(message = "Leave name should be mentioned.")
-    private String leave_Name;
+    private String leaveName;
 
     @NotNull
+    @Min(value = 1, message = "Number of days must be at least 1")
     private int noDays;
 
     @Enumerated(EnumType.STRING)

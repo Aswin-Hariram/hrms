@@ -32,7 +32,7 @@ public class DesignationController {
     @PostMapping("/createDesignation")
     public ResponseEntity<?> createDesignation(@RequestBody @Valid CreateDesignationRequest request){
 
-        Map<String,Object> response = designation_service.creatDesignation(request);
+        Map<String,Object> response = designation_service.createDesignation(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
     }

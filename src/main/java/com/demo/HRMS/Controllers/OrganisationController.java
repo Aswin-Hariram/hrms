@@ -43,7 +43,6 @@ public class OrganisationController {
             @RequestBody @Valid OrganisationEntity request) {
 
 
-        request.setOrgStatus("Not Activated");
         return ResponseEntity.status(HttpStatus.CREATED).body(orgService.register(request));
     }
 

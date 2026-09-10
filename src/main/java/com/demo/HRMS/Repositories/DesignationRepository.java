@@ -8,9 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DesignationRepository extends JpaRepository<DesignationEntity, Long> {
 
-    boolean existsByDesignationNameIgnoreCaseAndOrganisation_OrgID(
-            String designationName,
-            Long departmentDepartmentId
-            , Long organisationOrgID
+    boolean existsByDesignationNameIgnoreCaseAndOrganisation_OrgIDAndDepartment_DepartmentId(
+            String name, Long orgId, Long departmentId
     );
 }

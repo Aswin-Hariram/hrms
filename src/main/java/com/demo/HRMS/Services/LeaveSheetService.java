@@ -1,6 +1,5 @@
 package com.demo.HRMS.Services;
 
-
 import com.demo.HRMS.DTO.EmployeesLeaveData.CreateLeaveSheetDTO;
 import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
 import com.demo.HRMS.Entities.EmployeeEntity;
@@ -29,29 +28,27 @@ public class LeaveSheetService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
-
     @Autowired
     private OrganisationRepository organisationRepository;
+
     @Autowired
     private LeaveTypeRepository leaveTypeRepository;
 
+    public Map<String, Object> getLeaves(Long orgId) {
 
-
-    public Map<String,Object> getLeaves(Long orgId){
-
-
-        if(!organisationRepository.existsById(orgId)){
-            throw new RuntimeException("Orgnaisation not found");
+        if (!organisationRepository.existsById(orgId)) {
+            throw new RuntimeException("Organisation not found");
         }
 
-        List<LeaveSheetEntity> leaves = leaveSheetRepository.findAllByOrganisation_OrgID(orgId);
+        List<LeaveSheetEntity> leaves =
+                leaveSheetRepository.findAllByOrganisation_OrgID(orgId);
 
         List<LeaveSheetResponseDTO> response = new ArrayList<>();
-        for(LeaveSheetEntity leaveSheet : leaves){
+        for (LeaveSheetEntity leaveSheet : leaves) {
             response.add(
                     LeaveSheetResponseDTO.builder()
                             .leaveID(leaveSheet.getLeaveType().getLeaveId())
-                            .leaveName(leaveSheet.getLeaveType().getLeave_Name())
+                            .leaveName(leaveSheet.getLeaveType().getLeaveName())
                             .allocatedDays(leaveSheet.getAllocatedDays())
                             .usedDays(leaveSheet.getUsedDays())
                             .remainingDays(leaveSheet.getRemainingDays())
@@ -59,39 +56,71 @@ public class LeaveSheetService {
             );
         }
 
-
         return Map.of(
-                "message","success",
-                "data",response
-                );
-
+                "message", "success",
+                "data", response
+        );
     }
 
-
     @Transactional
-    public Map<String,Object> createLeave(CreateLeaveSheetDTO request){
+    public Map<String, Object> createLeave(CreateLeaveSheetDTO request) {
 
-        EmployeeEntity employee = employeeRepository.findByEmpIDAndOrganisation_OrgID(
-                request.getEmpID(),
+        if (request.getLeaveIDs() == null || request.getLeaveIDs().isEmpty()) {
+            throw new RuntimeException("At least one leave ID is required");
+        }
+
+        EmployeeEntity employee = employeeRepository
+                .findByEmpIDAndOrganisation_OrgID(
+                        request.getEmpID(),
+                        request.getOrgID()
+                )
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        Long logged = Long.valueOf(
+                SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getName()
+        );
+
+        if (!Objects.equals(
+                employee.getOrganisation().getOrgID(),
                 request.getOrgID()
-        ).orElseThrow(()->
-                new RuntimeException("Employee not found"));
-
-        Long logged = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-
-        if(!Objects.equals(employee.getOrganisation().getOrgID(), request.getOrgID())){
+        )) {
             throw new RuntimeException("You are not permitted to access this employee");
         }
 
-        if(employee.getReportToHr()==null||!Objects.equals(employee.getReportToHr().getEmpID(), logged)){
+        if (employee.getReportToHr() == null
+                || !Objects.equals(
+                employee.getReportToHr().getEmpID(),
+                logged
+        )) {
             throw new RuntimeException("You are not permitted to access this employee");
         }
 
+        for (Long leaveId : request.getLeaveIDs()) {
 
+            LeaveTypeEntity leaveType = leaveTypeRepository
+                    .findByOrganisation_OrgIDAndLeaveId(
+                            request.getOrgID(),
+                            leaveId
+                    )
+                    .orElseThrow(() ->
+                            new RuntimeException("Invalid leave id " + leaveId)
+                    );
 
-        for(Long leaveId: request.getLeaveIDs()){
-            LeaveTypeEntity leaveType = leaveTypeRepository.findByOrganisation_OrgIDAndLeaveId(request.getOrgID(),leaveId).orElseThrow(()->
-                    new RuntimeException("Invalid leave id"+ leaveId));
+            boolean alreadyExists =
+                    leaveSheetRepository
+                            .existsByEmployee_EmpIDAndOrganisation_OrgIDAndLeaveType_LeaveId(
+                                    employee.getEmpID(),
+                                    request.getOrgID(),
+                                    leaveId
+                            );
+
+            if (alreadyExists) {
+                throw new RuntimeException(
+                        "Leave sheet already exists for leave id " + leaveId
+                );
+            }
 
             LeaveSheetEntity sheetEntity = LeaveSheetEntity.builder()
                     .employee(employee)
@@ -102,15 +131,9 @@ public class LeaveSheetService {
                     .remainingDays(leaveType.getNoDays())
                     .build();
 
-           leaveSheetRepository.save(sheetEntity);
-
+            leaveSheetRepository.save(sheetEntity);
         }
 
-        return Map.of(
-          "message","success"
-        );
+        return Map.of("message", "success");
     }
-
-
-
 }

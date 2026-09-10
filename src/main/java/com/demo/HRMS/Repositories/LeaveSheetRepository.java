@@ -21,4 +21,6 @@ public interface LeaveSheetRepository extends JpaRepository<LeaveSheetEntity,Lon
             LeaveTypesCodes leaveTypeLeaveCode,
             Long organisationOrgID,
             Long employeeEmpID);
+
+    boolean existsByEmployee_EmpIDAndOrganisation_OrgIDAndLeaveType_LeaveId(Long empId, Long orgId, Long leaveId);
 }

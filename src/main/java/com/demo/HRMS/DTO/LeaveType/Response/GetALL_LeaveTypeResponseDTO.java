@@ -38,7 +38,7 @@ public class GetALL_LeaveTypeResponseDTO {
     public GetALL_LeaveTypeResponseDTO(LeaveTypeEntity savedLeaveEntity) {
         this.leave_ID = savedLeaveEntity.getLeaveId();
         this.orgID = savedLeaveEntity.getOrganisation().getOrgID();
-        this.leave_Name = savedLeaveEntity.getLeave_Name();
+        this.leave_Name = savedLeaveEntity.getLeaveName();
         this.leaveCode = savedLeaveEntity.getLeaveCode();
         this.active = savedLeaveEntity.isActive();
         this.approvalRequired = savedLeaveEntity.isApprovalRequired();

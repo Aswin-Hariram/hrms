@@ -29,7 +29,7 @@ public class DepartmentController {
     @PostMapping("/createDepartment")
     public ResponseEntity<?> createDepartment(@RequestBody @Valid CreateDepartmentRequest request){
 
-        Map<String,Object> response = dep_service.CreateDepartment(request);
+        Map<String,Object> response = dep_service.createDepartment(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
