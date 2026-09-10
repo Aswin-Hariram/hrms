@@ -10,10 +10,7 @@ import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
 import com.demo.HRMS.Entities.*;
 import com.demo.HRMS.Repositories.*;
 import com.demo.HRMS.Security.JwtService;
-import com.demo.HRMS.Types.EmployeeRole;
-import com.demo.HRMS.Types.EmploymentType;
-import com.demo.HRMS.Types.LeaveRequestStatus;
-import com.demo.HRMS.Types.LeaveTypesCodes;
+import com.demo.HRMS.Types.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -26,7 +23,8 @@ import java.util.*;
 @Service
 public class EmployeeService {
 
-    private static final String STATUS_ACTIVE = "ACTIVE";
+
+    private static final EmployeeStatus STATUS_ACTIVE = EmployeeStatus.ACTIVE;
 
     @Autowired
     private EmployeeRepository emp_repo;
@@ -99,7 +97,7 @@ public class EmployeeService {
             throw new RuntimeException("Reset default password before login");
         }
 
-        if (!STATUS_ACTIVE.equalsIgnoreCase(employee.getEmpStatus())) {
+        if (employee.getEmpStatus() != EmployeeStatus.ACTIVE) {
             throw new RuntimeException("Request your HR to update your status");
         }
 
@@ -254,7 +252,7 @@ public class EmployeeService {
                 .age(employee.getAge())
                 .empJoiningDate(employee.getEmpJoiningDate())
                 .empType(employee.getEmpType().name())
-                .empStatus(employee.getEmpStatus())
+                .empStatus(EmployeeStatus.ACTIVE.name())
                 .empRole(employee.getEmpRole())
                 .ReportingToHR(reportingToHR)
                 .leaveSheetEntitiesList(employeeLeave)

@@ -1,6 +1,7 @@
 package com.demo.HRMS.Entities;
 
 import com.demo.HRMS.Types.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeStatus;
 import com.demo.HRMS.Types.EmploymentType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
@@ -69,8 +70,9 @@ public class EmployeeEntity {
     @Column(nullable = false)
     private EmploymentType empType;
 
-    @Column(nullable = false)
-    private String empStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private EmployeeStatus empStatus = EmployeeStatus.INACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reportToHr")

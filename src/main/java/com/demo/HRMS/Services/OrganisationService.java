@@ -7,6 +7,7 @@ import com.demo.HRMS.Repositories.DepartmentRepository;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Repositories.OrganisationRepository;
 import com.demo.HRMS.Types.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeStatus;
 import com.demo.HRMS.Types.EmploymentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -58,7 +59,7 @@ public class OrganisationService {
         superAdmin.setAge(26);
         superAdmin.setEmpJoiningDate(LocalDate.now());
         superAdmin.setEmpType(EmploymentType.FULL_TIME);
-        superAdmin.setEmpStatus("INACTIVE");
+        superAdmin.setEmpStatus(EmployeeStatus.INACTIVE);
         superAdmin.setEmpRole(EmployeeRole.SUPER_ADMIN);
         superAdmin.setDefaultPasswordUpdated(false);
 

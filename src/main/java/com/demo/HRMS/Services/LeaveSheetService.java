@@ -34,6 +34,7 @@ public class LeaveSheetService {
     @Autowired
     private LeaveTypeRepository leaveTypeRepository;
 
+    @Transactional
     public Map<String, Object> getLeaves(Long orgId) {
 
         if (!organisationRepository.existsById(orgId)) {
@@ -69,57 +70,46 @@ public class LeaveSheetService {
             throw new RuntimeException("At least one leave ID is required");
         }
 
-        EmployeeEntity employee = employeeRepository
-                .findByEmpIDAndOrganisation_OrgID(
-                        request.getEmpID(),
-                        request.getOrgID()
-                )
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        Long logged = Long.valueOf(
-                SecurityContextHolder.getContext()
-                        .getAuthentication()
-                        .getName()
+        Long loggedEmpId = Long.valueOf(
+                SecurityContextHolder.getContext().getAuthentication().getName()
         );
 
-        if (!Objects.equals(
-                employee.getOrganisation().getOrgID(),
-                request.getOrgID()
-        )) {
-            throw new RuntimeException("You are not permitted to access this employee");
-        }
 
-        if (employee.getReportToHr() == null
-                || !Objects.equals(
-                employee.getReportToHr().getEmpID(),
-                logged
-        )) {
+        EmployeeEntity loggedEmployee = employeeRepository
+                .findByEmpIDAndOrganisation_OrgID(loggedEmpId, request.getOrgID())
+                .orElseThrow(() -> new RuntimeException("Logged-in user not found"));
+
+        Long orgId = loggedEmployee.getOrganisation().getOrgID();
+
+        EmployeeEntity employee = employeeRepository
+                .findByEmpIDAndOrganisation_OrgID(request.getEmpID(), orgId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        // Super Admin bypass; otherwise must be the employee's direct report-to HR
+        boolean isSuperAdmin = loggedEmployee.getEmpRole().name().equals("SUPER_ADMIN");
+        boolean isDirectReportTo = employee.getReportToHr() != null
+                && Objects.equals(employee.getReportToHr().getEmpID(), loggedEmpId);
+
+        if (!isSuperAdmin && !isDirectReportTo) {
             throw new RuntimeException("You are not permitted to access this employee");
         }
 
         for (Long leaveId : request.getLeaveIDs()) {
 
             LeaveTypeEntity leaveType = leaveTypeRepository
-                    .findByOrganisation_OrgIDAndLeaveId(
-                            request.getOrgID(),
-                            leaveId
-                    )
-                    .orElseThrow(() ->
-                            new RuntimeException("Invalid leave id " + leaveId)
-                    );
+                    .findByOrganisation_OrgIDAndLeaveId(orgId, leaveId)
+                    .orElseThrow(() -> new RuntimeException("Invalid leave id " + leaveId));
 
             boolean alreadyExists =
                     leaveSheetRepository
                             .existsByEmployee_EmpIDAndOrganisation_OrgIDAndLeaveType_LeaveId(
                                     employee.getEmpID(),
-                                    request.getOrgID(),
+                                    orgId,
                                     leaveId
                             );
 
             if (alreadyExists) {
-                throw new RuntimeException(
-                        "Leave sheet already exists for leave id " + leaveId
-                );
+                throw new RuntimeException("Leave sheet already exists for leave id " + leaveId);
             }
 
             LeaveSheetEntity sheetEntity = LeaveSheetEntity.builder()

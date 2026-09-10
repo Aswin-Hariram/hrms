@@ -62,6 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        if (emp.getEmpStatus() == null || !emp.getEmpStatus().isActive()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         List<GrantedAuthority> authorities = getAuthorities(emp);
 

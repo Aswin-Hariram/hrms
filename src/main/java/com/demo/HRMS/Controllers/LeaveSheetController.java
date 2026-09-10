@@ -1,6 +1,5 @@
 package com.demo.HRMS.Controllers;
 
-
 import com.demo.HRMS.DTO.EmployeesLeaveData.CreateLeaveSheetDTO;
 import com.demo.HRMS.Security.JwtService;
 import com.demo.HRMS.Services.LeaveSheetService;
@@ -20,29 +19,26 @@ public class LeaveSheetController {
 
     @Autowired
     private LeaveSheetService leaveSheetService;
+
     @Autowired
     private JwtService jwtService;
 
-
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','HR')")
     @PostMapping("/createLeave")
-    public ResponseEntity<?> createLeave(@RequestBody @Valid CreateLeaveSheetDTO request){
-
-        Map<String,Object> response = leaveSheetService.createLeave(request);
+    public ResponseEntity<?> createLeave(@RequestBody @Valid CreateLeaveSheetDTO request) {
+        Map<String, Object> response = leaveSheetService.createLeave(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','HR')")
     @GetMapping("/leaves")
-    public ResponseEntity<?> getLeaves(@RequestParam Long orgId){
+    public ResponseEntity<?> getLeaves(Authentication authentication) {
 
-        Map<String,Object> response = leaveSheetService.getLeaves(orgId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        String token = (String) authentication.getCredentials();
+        Long orgId = jwtService.extractOrg(token);
+
+        Map<String, Object> response = leaveSheetService.getLeaves(orgId);
+        return ResponseEntity.ok(response);
     }
-
-
-
-
-
-
 }
