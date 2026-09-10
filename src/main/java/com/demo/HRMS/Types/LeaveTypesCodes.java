@@ -1,4 +1,4 @@
-package com.demo.HRMS;
+package com.demo.HRMS.Types;
 
 public enum LeaveTypesCodes {
     CL, //Casual leave

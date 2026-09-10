@@ -1,7 +1,8 @@
 package com.demo.HRMS.Entities;
 
 
-import com.demo.HRMS.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeRole;
+import com.demo.HRMS.Types.EmploymentType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -68,8 +69,9 @@ public class EmployeeEntity {
     @Column(nullable = false)
     private LocalDate empJoiningDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String empType;
+    private EmploymentType empType;
 
     @Column(nullable = false)
     private String empStatus;
@@ -86,6 +88,12 @@ public class EmployeeEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "departmentId", nullable = true)
     private DepartmentEntity department;
+
+
+    @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL
+    )
+    private EmployeeCompensationEntity compensation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

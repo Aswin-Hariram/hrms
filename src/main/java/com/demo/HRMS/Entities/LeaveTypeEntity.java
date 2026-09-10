@@ -1,6 +1,6 @@
 package com.demo.HRMS.Entities;
 
-import com.demo.HRMS.LeaveTypesCodes;
+import com.demo.HRMS.Types.LeaveTypesCodes;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

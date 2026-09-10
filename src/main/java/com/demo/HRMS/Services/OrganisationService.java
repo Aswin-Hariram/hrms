@@ -1,30 +1,24 @@
 package com.demo.HRMS.Services;
 
 
-import com.demo.HRMS.DTO.Employee.CreateEmployeeRequestDTO;
-import com.demo.HRMS.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeRole;
 import com.demo.HRMS.Entities.DepartmentEntity;
-import com.demo.HRMS.Entities.DesignationEntity;
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Entities.OrganisationEntity;
 import com.demo.HRMS.Repositories.DepartmentRepository;
 import com.demo.HRMS.Repositories.DesignationRepository;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Repositories.OrganisationRepository;
-import jakarta.validation.Valid;
+import com.demo.HRMS.Types.EmploymentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
-import java.util.EnumSet;
 import java.util.Map;
 
 @Service
@@ -76,7 +70,7 @@ public class OrganisationService {
         superAdmin.setAge(26);
         superAdmin.setEmpJoiningDate(LocalDate.now());
 
-        superAdmin.setEmpType("ADMIN");
+        superAdmin.setEmpType(EmploymentType.FULL_TIME);
         superAdmin.setEmpStatus("NOT ACTIVE");
         superAdmin.setEmpRole(EmployeeRole.SUPER_ADMIN);
 

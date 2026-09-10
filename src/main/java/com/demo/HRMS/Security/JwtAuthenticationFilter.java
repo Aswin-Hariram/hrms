@@ -1,7 +1,7 @@
 package com.demo.HRMS.Security;
 
-import com.demo.HRMS.EmployeeAuthorities;
-import com.demo.HRMS.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeAuthorities;
+import com.demo.HRMS.Types.EmployeeRole;
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import jakarta.servlet.FilterChain;

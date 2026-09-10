@@ -1,7 +1,7 @@
 package com.demo.HRMS.DTO.LeaveType.Response;
 
 import com.demo.HRMS.Entities.LeaveTypeEntity;
-import com.demo.HRMS.LeaveTypesCodes;
+import com.demo.HRMS.Types.LeaveTypesCodes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -5,11 +5,10 @@ import com.demo.HRMS.DTO.LeaveType.CreateLeaveTypeDTO;
 import com.demo.HRMS.DTO.LeaveType.Response.GetALL_LeaveTypeResponseDTO;
 import com.demo.HRMS.Entities.LeaveTypeEntity;
 import com.demo.HRMS.Entities.OrganisationEntity;
-import com.demo.HRMS.LeaveTypesCodes;
+import com.demo.HRMS.Types.LeaveTypesCodes;
 import com.demo.HRMS.Repositories.LeaveTypeRepository;
 import com.demo.HRMS.Repositories.OrganisationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

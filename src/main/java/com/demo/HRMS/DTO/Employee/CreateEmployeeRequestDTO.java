@@ -1,6 +1,6 @@
 package com.demo.HRMS.DTO.Employee;
 
-import com.demo.HRMS.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeRole;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

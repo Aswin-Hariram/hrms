@@ -1,6 +1,6 @@
 package com.demo.HRMS.Entities;
 
-import com.demo.HRMS.LeaveRequestStatus;
+import com.demo.HRMS.Types.LeaveRequestStatus;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

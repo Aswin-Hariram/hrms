@@ -8,10 +8,11 @@ import com.demo.HRMS.DTO.Employee.EmployeeResetPassword;
 import com.demo.HRMS.DTO.Employee.Response.GetEmployeeProfileDTO;
 import com.demo.HRMS.DTO.Employee.Response.LeaveRequestResponseDTO;
 import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
-import com.demo.HRMS.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeRole;
 import com.demo.HRMS.Entities.*;
-import com.demo.HRMS.LeaveRequestStatus;
-import com.demo.HRMS.LeaveTypesCodes;
+import com.demo.HRMS.Types.EmploymentType;
+import com.demo.HRMS.Types.LeaveRequestStatus;
+import com.demo.HRMS.Types.LeaveTypesCodes;
 import com.demo.HRMS.Repositories.*;
 import com.demo.HRMS.Security.JwtService;
 import jakarta.transaction.Transactional;
@@ -20,7 +21,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -159,6 +159,8 @@ public class EmployeeService {
         }
 
 
+
+
         EmployeeEntity employee = EmployeeEntity.builder()
                 .organisation(organisation)
                 .empFirstName(request.getEmpFirstName())
@@ -169,7 +171,7 @@ public class EmployeeService {
                 .empDOB(request.getEmpDOB())
                 .age(request.getAge())
                 .empJoiningDate(request.getEmpJoiningDate())
-                .empType(request.getEmpType())
+                .empType(EmploymentType.valueOf(request.getEmpType().toUpperCase()))
                 .empStatus(request.getEmpStatus())
                 .designation(designation)
                 .department(department)
@@ -243,7 +245,7 @@ public class EmployeeService {
                 .empDOB(employee.getEmpDOB())
                 .age(employee.getAge())
                 .empJoiningDate(employee.getEmpJoiningDate())
-                .empType(employee.getEmpType())
+                .empType(employee.getEmpType().name())
                 .empStatus(employee.getEmpStatus())
                 .empRole(employee.getEmpRole())
                 .ReportingToHR(reportingToHR)
@@ -382,4 +384,6 @@ public class EmployeeService {
 
 
     }
+
+
 }

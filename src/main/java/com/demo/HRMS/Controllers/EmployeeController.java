@@ -1,28 +1,18 @@
 package com.demo.HRMS.Controllers;
 
-import com.demo.HRMS.DTO.Employee.CreateEmployeeRequestDTO;
-import com.demo.HRMS.DTO.Employee.EmployeeLeaveReqDTO;
-import com.demo.HRMS.DTO.Employee.EmployeeLoginRequest;
-import com.demo.HRMS.DTO.Employee.EmployeeResetPassword;
-import com.demo.HRMS.Entities.EmployeeEntity;
-import com.demo.HRMS.LeaveTypesCodes;
+import com.demo.HRMS.DTO.Employee.*;
 import com.demo.HRMS.Security.JwtService;
+import com.demo.HRMS.Services.EmployeeCompensationService;
 import com.demo.HRMS.Services.EmployeeService;
-import com.demo.HRMS.Services.OrganisationService;
-import io.jsonwebtoken.Jwt;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.Map;
 
 
@@ -35,6 +25,11 @@ public class EmployeeController {
     @Autowired
     private EmployeeService empService;
 
+
+
+    @Autowired
+    private EmployeeCompensationService employeeCompensationService;
+
     @Autowired
     private JwtService service;
 
@@ -44,6 +39,7 @@ public class EmployeeController {
     public ResponseEntity<?> createEmployee(
             @RequestBody @Valid CreateEmployeeRequestDTO request) {
 
+        request.setEmpStatus("Active");
         Map<String,Object> response = empService.createEmployee(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -66,6 +62,7 @@ public class EmployeeController {
     public ResponseEntity<?> login(
             @Valid @RequestBody EmployeeLoginRequest request) {
 
+
         Map<String, Object> response = empService.login(request);
 
         return ResponseEntity.ok(response);
@@ -74,6 +71,7 @@ public class EmployeeController {
     @PreAuthorize("hasAuthority('CREATE_EMPLOYEE')")
     @GetMapping("/getEmployeeRole")
     public ResponseEntity<?> getEmployeeRole(@RequestParam Long empID,@RequestParam Long orgID){
+
 
 
         Map<String,Object> response = empService.getEmployeeRole(empID,orgID);
@@ -91,6 +89,7 @@ public class EmployeeController {
 
         Long empID = service.extractID(token);
         Long orgID = service.extractOrg(token);
+
 
 
 
@@ -125,6 +124,20 @@ public class EmployeeController {
         Long orgID = service.extractOrg(token);
 
         Map<String,Object> response = empService.getAllRequest(empID,orgID);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN')")
+    @PostMapping("/{empID}/compensation")
+    public ResponseEntity<?> addCompensation(
+            @PathVariable Long empID,
+            @Valid @RequestBody EmployeeCompensationDTO dto
+    ) {
+
+        Map<String, Object> response =
+                employeeCompensationService.addCompensation(empID, dto);
 
         return ResponseEntity.ok(response);
     }

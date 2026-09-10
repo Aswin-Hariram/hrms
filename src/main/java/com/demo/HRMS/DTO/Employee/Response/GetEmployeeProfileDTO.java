@@ -3,9 +3,8 @@ package com.demo.HRMS.DTO.Employee.Response;
 
 
 import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
-import com.demo.HRMS.EmployeeRole;
+import com.demo.HRMS.Types.EmployeeRole;
 
-import com.demo.HRMS.Entities.LeaveSheetEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

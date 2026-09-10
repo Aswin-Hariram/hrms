@@ -1,6 +1,6 @@
 package com.demo.HRMS.DTO.Employee.Response;
 
-import com.demo.HRMS.LeaveRequestStatus;
+import com.demo.HRMS.Types.LeaveRequestStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

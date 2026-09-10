@@ -1,6 +1,5 @@
 package com.demo.HRMS.DTO.LeaveType;
 
-import com.demo.HRMS.LeaveTypesCodes;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

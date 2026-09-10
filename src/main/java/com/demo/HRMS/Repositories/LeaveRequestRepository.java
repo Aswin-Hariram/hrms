@@ -2,7 +2,7 @@ package com.demo.HRMS.Repositories;
 
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Entities.LeaveRequestEntity;
-import com.demo.HRMS.LeaveRequestStatus;
+import com.demo.HRMS.Types.LeaveRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

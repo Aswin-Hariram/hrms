@@ -2,11 +2,10 @@ package com.demo.HRMS.Services;
 
 
 import com.demo.HRMS.DTO.LeaveRequest.Response.PendingLeaveResponse;
-import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Entities.LeaveRequestEntity;
 import com.demo.HRMS.Entities.LeaveSheetEntity;
-import com.demo.HRMS.LeaveRequestStatus;
+import com.demo.HRMS.Types.LeaveRequestStatus;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Repositories.LeaveRequestRepository;
 import com.demo.HRMS.Repositories.LeaveSheetRepository;
