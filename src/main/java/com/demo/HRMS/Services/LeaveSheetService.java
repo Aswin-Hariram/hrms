@@ -2,6 +2,7 @@ package com.demo.HRMS.Services;
 
 
 import com.demo.HRMS.DTO.EmployeesLeaveData.CreateLeaveSheetDTO;
+import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Entities.LeaveSheetEntity;
 import com.demo.HRMS.Entities.LeaveTypeEntity;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -26,10 +29,43 @@ public class LeaveSheetService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+
     @Autowired
     private OrganisationRepository organisationRepository;
     @Autowired
     private LeaveTypeRepository leaveTypeRepository;
+
+
+
+    public Map<String,Object> getLeaves(Long orgId){
+
+
+        if(!organisationRepository.existsById(orgId)){
+            throw new RuntimeException("Orgnaisation not found");
+        }
+
+        List<LeaveSheetEntity> leaves = leaveSheetRepository.findAllByOrganisation_OrgID(orgId);
+
+        List<LeaveSheetResponseDTO> response = new ArrayList<>();
+        for(LeaveSheetEntity leaveSheet : leaves){
+            response.add(
+                    LeaveSheetResponseDTO.builder()
+                            .leaveID(leaveSheet.getLeaveType().getLeaveId())
+                            .leaveName(leaveSheet.getLeaveType().getLeave_Name())
+                            .allocatedDays(leaveSheet.getAllocatedDays())
+                            .usedDays(leaveSheet.getUsedDays())
+                            .remainingDays(leaveSheet.getRemainingDays())
+                            .build()
+            );
+        }
+
+
+        return Map.of(
+                "message","success",
+                "data",response
+                );
+
+    }
 
 
     @Transactional
@@ -74,4 +110,7 @@ public class LeaveSheetService {
           "message","success"
         );
     }
+
+
+
 }

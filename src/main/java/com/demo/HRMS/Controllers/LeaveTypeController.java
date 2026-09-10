@@ -23,6 +23,7 @@ public class LeaveTypeController {
         this.leaveTypeService  = leaveTypeService;
     }
 
+    @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN')")
     @PostMapping("/createLeaveType")
     public ResponseEntity<?> createLeaveType(@RequestBody @Valid CreateLeaveTypeDTO request){
         Map<String,Object> response = leaveTypeService.createLeaveType(request);

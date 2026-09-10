@@ -27,10 +27,12 @@ public class LeaveSheetEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empID", nullable = false)
+    @JsonBackReference
     private EmployeeEntity employee;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "orgID", nullable = false)
+    @JsonBackReference
     private OrganisationEntity organisation;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

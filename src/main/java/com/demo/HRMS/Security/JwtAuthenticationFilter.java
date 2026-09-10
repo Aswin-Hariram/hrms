@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -72,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(
                         empId,
-                        null,
+                        token,
                        authorities
                 );
 
@@ -99,6 +98,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } else if (emp.getEmpRole()==EmployeeRole.HR) {
             authorities.add(new SimpleGrantedAuthority(EmployeeAuthorities.CREATE_EMPLOYEE.name()));
         }
+
 
         return authorities;
     }

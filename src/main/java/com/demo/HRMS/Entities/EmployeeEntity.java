@@ -22,7 +22,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "Employee")
+@Table(
+        name = "Employee",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"empID","orgID"}
+        )
+)
+
 public class EmployeeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -96,6 +102,8 @@ public class EmployeeEntity {
     @UpdateTimestamp
     @Column(name = "Updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    private boolean isActiveLeaveRequest=false;
 
 
 }
