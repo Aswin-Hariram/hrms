@@ -46,6 +46,17 @@ public class OrganisationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(orgService.register(request));
     }
 
+
+    @PostMapping("/createAccountant")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<?> createAccountant(@RequestParam Long empId) {
+
+        return orgService.createAccountant(empId);
+    }
+
+
+
+
     
 
 

@@ -54,13 +54,19 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAuthority('CREATE_EMPLOYEE')")
+
     @GetMapping("/getEmployeeRole")
+    @PreAuthorize("hasAnyRole('EMPLOYEE','HR','SUPER_ADMIN')")
     public ResponseEntity<?> getEmployeeRole(
             @RequestParam Long empID,
-            @RequestParam Long orgID
+            Authentication authentication
     ) {
-        Map<String, Object> response = empService.getEmployeeRole(empID, orgID);
+        String token = (String) authentication.getCredentials();
+        Long loggedEmpId = service.extractID(token);
+        Long orgId = service.extractOrg(token);
+
+        Map<String, Object> response =
+                empService.getEmployeeRole(empID, loggedEmpId, orgId);
         return ResponseEntity.ok(response);
     }
 
@@ -122,7 +128,6 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
-
     @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN','EMPLOYEE')")
     @GetMapping("/compensation")
     public ResponseEntity<?> addCompensation(Authentication authentication) {
@@ -135,7 +140,6 @@ public class EmployeeController {
                 employeeCompensationService.getActiveCompensation(empID, orgID);
         return ResponseEntity.ok(response);
     }
-
 
     @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN')")
     @GetMapping("/reportees/compensation")
@@ -151,6 +155,16 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN','EMPLOYEE')")
+    @GetMapping("/myCompensation/history")
+    public ResponseEntity<?> getMyCompensationHistory(Authentication authentication) {
 
+        String token = (String) authentication.getCredentials();
+        Long empID = service.extractID(token);
+        Long orgID = service.extractOrg(token);
 
+        Map<String, Object> response =
+                employeeCompensationService.getCompensationHistory(empID, orgID);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -33,7 +33,9 @@ public class SecurityConfig  {
                                     "/api/health/check",
                                     "/api/organisation/register",
                                     "/api/employee/reset",
-                                    "/api/employee/login"
+                                    "/api/employee/login",
+                                    "/api/auth/refresh",
+                                    "/api/auth/logout"
                             )
                             .permitAll()
 

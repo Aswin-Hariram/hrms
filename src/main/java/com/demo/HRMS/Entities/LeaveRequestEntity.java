@@ -67,4 +67,11 @@ public class LeaveRequestEntity {
     @Column(nullable = false)
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void init() {
+        if (status == null) {
+            status = LeaveRequestStatus.SUBMITTED;
+        }
+    }
 }

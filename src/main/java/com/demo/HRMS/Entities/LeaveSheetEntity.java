@@ -40,8 +40,7 @@ public class LeaveSheetEntity {
     @JsonBackReference
     private LeaveTypeEntity leaveType;
 
-    @Column(nullable = false)
-    private int allocatedDays;
+
 
     @Column(nullable = false)
     private int usedDays=0;

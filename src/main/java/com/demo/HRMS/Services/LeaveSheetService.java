@@ -9,30 +9,35 @@ import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Repositories.LeaveSheetRepository;
 import com.demo.HRMS.Repositories.LeaveTypeRepository;
 import com.demo.HRMS.Repositories.OrganisationRepository;
+import com.demo.HRMS.Types.EmployeeRole;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 public class LeaveSheetService {
 
-    @Autowired
-    private LeaveSheetRepository leaveSheetRepository;
+    private final LeaveSheetRepository leaveSheetRepository;
+    private final EmployeeRepository employeeRepository;
+    private final OrganisationRepository organisationRepository;
+    private final LeaveTypeRepository leaveTypeRepository;
+    private final HierarchyService hierarchyService;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private OrganisationRepository organisationRepository;
-
-    @Autowired
-    private LeaveTypeRepository leaveTypeRepository;
+    public LeaveSheetService(LeaveSheetRepository leaveSheetRepository,
+                             EmployeeRepository employeeRepository,
+                             OrganisationRepository organisationRepository,
+                             LeaveTypeRepository leaveTypeRepository,
+                             HierarchyService hierarchyService) {
+        this.leaveSheetRepository = leaveSheetRepository;
+        this.employeeRepository = employeeRepository;
+        this.organisationRepository = organisationRepository;
+        this.leaveTypeRepository = leaveTypeRepository;
+        this.hierarchyService = hierarchyService;
+    }
 
     @Transactional
     public Map<String, Object> getLeaves(Long orgId) {
@@ -41,6 +46,7 @@ public class LeaveSheetService {
             throw new RuntimeException("Organisation not found");
         }
 
+
         List<LeaveSheetEntity> leaves =
                 leaveSheetRepository.findAllByOrganisation_OrgID(orgId);
 
@@ -48,19 +54,17 @@ public class LeaveSheetService {
         for (LeaveSheetEntity leaveSheet : leaves) {
             response.add(
                     LeaveSheetResponseDTO.builder()
+                            .empID(leaveSheet.getEmployee().getEmpID())
                             .leaveID(leaveSheet.getLeaveType().getLeaveId())
                             .leaveName(leaveSheet.getLeaveType().getLeaveName())
-                            .allocatedDays(leaveSheet.getAllocatedDays())
+                            .allocatedDays(leaveSheet.getLeaveType().getNoDays())
                             .usedDays(leaveSheet.getUsedDays())
                             .remainingDays(leaveSheet.getRemainingDays())
                             .build()
             );
         }
 
-        return Map.of(
-                "message", "success",
-                "data", response
-        );
+        return Map.of("message", "success", "data", response);
     }
 
     @Transactional
@@ -74,7 +78,6 @@ public class LeaveSheetService {
                 SecurityContextHolder.getContext().getAuthentication().getName()
         );
 
-
         EmployeeEntity loggedEmployee = employeeRepository
                 .findByEmpIDAndOrganisation_OrgID(loggedEmpId, request.getOrgID())
                 .orElseThrow(() -> new RuntimeException("Logged-in user not found"));
@@ -85,12 +88,12 @@ public class LeaveSheetService {
                 .findByEmpIDAndOrganisation_OrgID(request.getEmpID(), orgId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Super Admin bypass; otherwise must be the employee's direct report-to HR
-        boolean isSuperAdmin = loggedEmployee.getEmpRole().name().equals("SUPER_ADMIN");
-        boolean isDirectReportTo = employee.getReportToHr() != null
-                && Objects.equals(employee.getReportToHr().getEmpID(), loggedEmpId);
 
-        if (!isSuperAdmin && !isDirectReportTo) {
+        boolean isSuperAdmin = loggedEmployee.getEmpRole() == EmployeeRole.SUPER_ADMIN;
+        boolean isAncestor = hierarchyService.isManagerOf(
+                loggedEmpId, employee.getEmpID(), orgId);
+
+        if (!isSuperAdmin && !isAncestor) {
             throw new RuntimeException("You are not permitted to access this employee");
         }
 
@@ -103,10 +106,7 @@ public class LeaveSheetService {
             boolean alreadyExists =
                     leaveSheetRepository
                             .existsByEmployee_EmpIDAndOrganisation_OrgIDAndLeaveType_LeaveId(
-                                    employee.getEmpID(),
-                                    orgId,
-                                    leaveId
-                            );
+                                    employee.getEmpID(), orgId, leaveId);
 
             if (alreadyExists) {
                 throw new RuntimeException("Leave sheet already exists for leave id " + leaveId);
@@ -116,7 +116,6 @@ public class LeaveSheetService {
                     .employee(employee)
                     .organisation(employee.getOrganisation())
                     .leaveType(leaveType)
-                    .allocatedDays(leaveType.getNoDays())
                     .usedDays(0)
                     .remainingDays(leaveType.getNoDays())
                     .build();

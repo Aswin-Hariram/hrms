@@ -7,26 +7,34 @@ import com.demo.HRMS.Entities.LeaveSheetEntity;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Repositories.LeaveRequestRepository;
 import com.demo.HRMS.Repositories.LeaveSheetRepository;
+import com.demo.HRMS.Types.EmployeeRole;
 import com.demo.HRMS.Types.LeaveRequestStatus;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class LeaveRequestService {
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
+    private final LeaveSheetRepository leaveSheetRepository;
+    private final HierarchyService hierarchyService;
 
-    @Autowired
-    private LeaveRequestRepository leaveRequestRepository;
+    public LeaveRequestService(EmployeeRepository employeeRepository,
+                               LeaveRequestRepository leaveRequestRepository,
+                               LeaveSheetRepository leaveSheetRepository,
+                               HierarchyService hierarchyService) {
+        this.employeeRepository = employeeRepository;
+        this.leaveRequestRepository = leaveRequestRepository;
+        this.leaveSheetRepository = leaveSheetRepository;
+        this.hierarchyService = hierarchyService;
+    }
 
-    @Autowired
-    private LeaveSheetRepository leaveSheetRepository;
 
     @Transactional
     public Map<String, Object> getAllLeaveRequests(Long empId, Long orgId) {
@@ -35,50 +43,42 @@ public class LeaveRequestService {
                 .findByEmpIDAndOrganisation_OrgID(empId, orgId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<LeaveRequestEntity> pending =
-                leaveRequestRepository
-                        .findAllByOrganisation_OrgIDAndRequestedToAndStatus(
-                                orgId,
-                                loggedEmp,
-                                LeaveRequestStatus.SUBMITTED
-                        );
+        Set<Long> descendantIds = hierarchyService.getDescendantIds(empId, orgId);
+
+        List<LeaveRequestEntity> pending = descendantIds.isEmpty()
+                ? List.of()
+                : leaveRequestRepository
+                .findAllByOrganisation_OrgIDAndEmployee_EmpIDInAndStatus(
+                        orgId,
+                        descendantIds,
+                        LeaveRequestStatus.SUBMITTED
+                );
 
         List<PendingLeaveResponse> response = pending.stream()
                 .map(request -> PendingLeaveResponse.builder()
                         .requestID(request.getRequestID())
                         .employeeID(request.getEmployee().getEmpID())
-                        .employeeName(
-                                request.getEmployee().getEmpFirstName()
-                                        + " "
-                                        + request.getEmployee().getEmpLastName()
-                        )
+                        .employeeName(request.getEmployee().getEmpFirstName()
+                                + " " + request.getEmployee().getEmpLastName())
                         .employeeEmail(request.getEmployee().getEmpEmail())
                         .leaveID(request.getLeaveSheet().getEmpLeaveId())
                         .noOfDays(request.getNoOfDays())
                         .startDate(request.getStartDate())
                         .endDate(request.getEndDate())
-                        .leaveName(
-                                request.getLeaveSheet().getLeaveType().getLeaveName()
-                        )
+                        .leaveName(request.getLeaveSheet().getLeaveType().getLeaveName())
                         .status(request.getStatus())
                         .reason(request.getReason())
                         .requestedToID(request.getRequestedTo().getEmpID())
-                        .requestedToName(
-                                request.getRequestedTo().getEmpFirstName()
-                                        + " "
-                                        + request.getRequestedTo().getEmpLastName()
-                        )
+                        .requestedToName(request.getRequestedTo().getEmpFirstName()
+                                + " " + request.getRequestedTo().getEmpLastName())
                         .requestedAt(request.getRequestedAt())
                         .updatedAt(request.getUpdatedAt())
-                        .build()
-                )
+                        .build())
                 .toList();
 
-        return Map.of(
-                "message", "success",
-                "data", response
-        );
+        return Map.of("message", "success", "data", response);
     }
+
 
     @Transactional
     public Map<String, Object> approveLeave(Long requestId, Long hrId, Long orgId) {
@@ -90,23 +90,19 @@ public class LeaveRequestService {
         LeaveRequestEntity request = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Leave Request not found"));
 
-
-        if (!Objects.equals(
-                request.getOrganisation().getOrgID(),
-                orgId
-        )) {
+        if (!Objects.equals(request.getOrganisation().getOrgID(), orgId)) {
             throw new RuntimeException("You don't have access to this request");
         }
 
+        boolean isSuperAdmin = hr.getEmpRole() == EmployeeRole.SUPER_ADMIN;
+        boolean isAncestor = hierarchyService.isManagerOf(
+                hr.getEmpID(), request.getEmployee().getEmpID(), orgId);
 
-        if (!Objects.equals(
-                request.getRequestedTo().getEmpID(),
-                hr.getEmpID()
-        )) {
+        if (!isSuperAdmin && !isAncestor) {
             throw new RuntimeException("You don't have access to this request");
         }
 
-        if (!request.getStatus().equals(LeaveRequestStatus.SUBMITTED)) {
+        if (request.getStatus() != LeaveRequestStatus.SUBMITTED) {
             throw new RuntimeException("Only submitted status leaves can be approved");
         }
 
@@ -117,21 +113,55 @@ public class LeaveRequestService {
                 .findByLeaveType_LeaveCodeAndOrganisation_OrgIDAndEmployee_EmpID(
                         request.getLeaveSheet().getLeaveType().getLeaveCode(),
                         orgId,
-                        request.getEmployee().getEmpID()
-                )
+                        request.getEmployee().getEmpID())
                 .orElseThrow(() -> new RuntimeException("Leave not found"));
 
         leaveSheet.setUsedDays(leaveSheet.getUsedDays() + request.getNoOfDays());
-        leaveSheet.setRemainingDays(
-                leaveSheet.getRemainingDays() - request.getNoOfDays()
-        );
+        leaveSheet.setRemainingDays(leaveSheet.getRemainingDays() - request.getNoOfDays());
         leaveSheetRepository.save(leaveSheet);
 
-        // Reset the active flag so the employee can request again
         EmployeeEntity employee = request.getEmployee();
         employee.setActiveLeaveRequest(false);
         employeeRepository.save(employee);
 
         return Map.of("message", "Leave approved");
+    }
+
+
+    @Transactional
+    public Map<String, Object> rejectLeave(Long requestId, Long hrId, Long orgId, String reason) {
+
+        EmployeeEntity hr = employeeRepository
+                .findByEmpIDAndOrganisation_OrgID(hrId, orgId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        LeaveRequestEntity request = leaveRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Leave Request not found"));
+
+        if (!Objects.equals(request.getOrganisation().getOrgID(), orgId)) {
+            throw new RuntimeException("You don't have access to this request");
+        }
+
+        boolean isSuperAdmin = hr.getEmpRole() == EmployeeRole.SUPER_ADMIN;
+        boolean isAncestor = hierarchyService.isManagerOf(
+                hr.getEmpID(), request.getEmployee().getEmpID(), orgId);
+
+        if (!isSuperAdmin && !isAncestor) {
+            throw new RuntimeException("You don't have access to this request");
+        }
+
+        if (request.getStatus() != LeaveRequestStatus.SUBMITTED) {
+            throw new RuntimeException("Only submitted status leaves can be rejected");
+        }
+
+        request.setStatus(LeaveRequestStatus.REJECTED);
+        leaveRequestRepository.save(request);
+
+        // No days deducted on rejection — just release the active flag
+        EmployeeEntity employee = request.getEmployee();
+        employee.setActiveLeaveRequest(false);
+        employeeRepository.save(employee);
+
+        return Map.of("message", "Leave rejected", "reason", reason);
     }
 }

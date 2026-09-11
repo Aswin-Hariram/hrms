@@ -6,6 +6,7 @@ import com.demo.HRMS.Entities.OrganisationEntity;
 import com.demo.HRMS.Repositories.DepartmentRepository;
 import com.demo.HRMS.Repositories.EmployeeRepository;
 import com.demo.HRMS.Repositories.OrganisationRepository;
+import com.demo.HRMS.Types.EmployeeAuthorities;
 import com.demo.HRMS.Types.EmployeeRole;
 import com.demo.HRMS.Types.EmployeeStatus;
 import com.demo.HRMS.Types.EmploymentType;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class OrganisationService {
@@ -61,6 +63,7 @@ public class OrganisationService {
         superAdmin.setEmpType(EmploymentType.FULL_TIME);
         superAdmin.setEmpStatus(EmployeeStatus.INACTIVE);
         superAdmin.setEmpRole(EmployeeRole.SUPER_ADMIN);
+        superAdmin.setAuthorities(Set.of(EmployeeAuthorities.SUPER_ADMIN));
         superAdmin.setDefaultPasswordUpdated(false);
 
         emp_repo.save(superAdmin);
@@ -107,4 +110,37 @@ public class OrganisationService {
                 )
         );
     }
+
+
+    @Transactional
+    public ResponseEntity<?> createAccountant(Long empId) {
+
+        EmployeeEntity employee = emp_repo.findById(empId)
+                .orElseThrow(() ->
+                        new RuntimeException("Employee not found")
+                );
+
+        if (employee.getEmpStatus() == null ||
+                !employee.getEmpStatus().isActive()) {
+            throw new RuntimeException(
+                    "Only active employees can receive Accountant authority"
+            );
+        }
+
+        employee.getAuthorities().add(EmployeeAuthorities.ACCOUNTANT);
+
+        emp_repo.save(employee);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "Accountant authority granted",
+                        "employeeId", employee.getEmpID(),
+                        "role", employee.getEmpRole(),
+                        "authority", EmployeeAuthorities.ACCOUNTANT
+                )
+        );
+    }
+
+
+
 }

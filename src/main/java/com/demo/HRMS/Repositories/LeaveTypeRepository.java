@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface LeaveTypeRepository extends JpaRepository<LeaveTypeEntity,Long> {
 
 
+    boolean existsByOrganisation_OrgIDAndLeaveCodeIgnoreCase(Long orgId, String code);
     List<LeaveTypeEntity> findByOrganisation_OrgID(Long organisationOrgID);
 
     Optional<LeaveTypeEntity> findByOrganisation_OrgIDAndLeaveId(Long organisationOrgID, Long leaveId);

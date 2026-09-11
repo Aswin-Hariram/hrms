@@ -32,20 +32,36 @@ public class EmployeeService {
     @Autowired
     private OrganisationRepository org_repo;
 
-    @Autowired
+    private final HierarchyService hierarchyService;
     private DepartmentRepository dep_repo;
-
-    @Autowired
     private DesignationRepository desg_repo;
-
-    @Autowired
     private LeaveSheetRepository leaveSheetRepository;
 
-    @Autowired
+
     private LeaveRequestRepository leaveRequestRepository;
 
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    public EmployeeService(EmployeeRepository emp_repo,
+                           OrganisationRepository org_repo,
+                           DepartmentRepository dep_repo,
+                           DesignationRepository desg_repo,
+                           LeaveSheetRepository leaveSheetRepository,
+                           LeaveRequestRepository leaveRequestRepository,
+                           JwtService jwtService,
+                           HierarchyService hierarchyService) {
+        this.emp_repo = emp_repo;
+        this.org_repo = org_repo;
+        this.dep_repo = dep_repo;
+        this.desg_repo = desg_repo;
+        this.leaveSheetRepository = leaveSheetRepository;
+        this.leaveRequestRepository = leaveRequestRepository;
+        this.jwtService = jwtService;
+        this.hierarchyService = hierarchyService;
+    }
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -101,19 +117,23 @@ public class EmployeeService {
             throw new RuntimeException("Request your HR to update your status");
         }
 
-        String token = jwtService.genToken(employee);
+        String accessToken  = jwtService.genAccessToken(employee);
+        RefreshTokenEntity refreshToken = refreshTokenService.createRefreshToken(employee);
 
         return Map.of(
-                "message", "Login successful",
-                "token", token,
-                "empId", employee.getEmpID()
+                "message",      "Login successful",
+                "token",        accessToken,
+                "refreshToken", refreshToken.getToken(),
+                "tokenType",    "Bearer",
+                "expiresIn",    15 * 60,
+                "empId",        employee.getEmpID()
         );
     }
 
     @Transactional
     public Map<String, Object> createEmployee(CreateEmployeeRequestDTO request) {
 
-        // Email uniqueness within org
+
         if (emp_repo.existsByEmpEmailAndOrganisation_OrgID(
                 request.getEmpEmail(),
                 request.getOrgID()
@@ -158,13 +178,18 @@ public class EmployeeService {
         if (request.getReportToHr() != null) {
             reportToHr = emp_repo.findById(request.getReportToHr())
                     .orElseThrow(() -> new RuntimeException("Report-to HR not found"));
-            if (!Objects.equals(
-                    reportToHr.getOrganisation().getOrgID(),
-                    request.getOrgID()
-            )) {
+            if (!Objects.equals(reportToHr.getOrganisation().getOrgID(), request.getOrgID())) {
                 throw new RuntimeException("Report-to HR does not belong to this organisation");
             }
         }
+
+
+        if (reportToHr == null && request.getEmpRole() != EmployeeRole.SUPER_ADMIN) {
+            throw new RuntimeException("Non-admin employees must have a reporting manager");
+        }
+
+
+        hierarchyService.validateReportingChain(null, reportToHr);
 
         String defaultPassword =
                 request.getEmpFirstName() + request.getEmpPhoneNumber();
@@ -183,16 +208,18 @@ public class EmployeeService {
                 .empStatus(STATUS_ACTIVE)
                 .designation(designation)
                 .department(department)
+                .authorities(Set.of(EmployeeAuthorities.BASIC))
                 .empRole(request.getEmpRole())
                 .defaultPasswordUpdated(false)
                 .reportToHr(reportToHr)
                 .build();
 
-        emp_repo.save(employee);
+        EmployeeEntity saved =  emp_repo.save(employee);
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Success");
         response.put("email", employee.getEmpEmail());
+        response.put("Auth",saved.getAuthorities());
         response.put("default_pass", defaultPassword);
         response.put(
                 "Report_to",
@@ -201,14 +228,30 @@ public class EmployeeService {
         return response;
     }
 
-    public Map<String, Object> getEmployeeRole(Long empId, Long orgId) {
-        EmployeeEntity employee = emp_repo
-                .findByEmpIDAndOrganisation_OrgID(empId, orgId)
+    public Map<String, Object> getEmployeeRole(Long targetEmpId,
+                                               Long loggedEmpId,
+                                               Long orgId) {
+
+        EmployeeEntity loggedEmployee = emp_repo
+                .findByEmpIDAndOrganisation_OrgID(loggedEmpId, orgId)
+                .orElseThrow(() -> new RuntimeException("Logged-in user not found"));
+
+        EmployeeEntity target = emp_repo
+                .findByEmpIDAndOrganisation_OrgID(targetEmpId, orgId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
+        boolean isSelf = loggedEmpId.equals(targetEmpId);
+        boolean isSuperAdmin = loggedEmployee.getEmpRole() == EmployeeRole.SUPER_ADMIN;
+        boolean isAncestor = hierarchyService.isManagerOf(
+                loggedEmpId, targetEmpId, orgId);
+
+        if (!isSelf && !isSuperAdmin && !isAncestor) {
+            throw new RuntimeException("You are not permitted to view this employee's role");
+        }
+
         return Map.of(
-                "empID", employee.getEmpID(),
-                "role", employee.getEmpRole()
+                "empID", target.getEmpID(),
+                "role", target.getEmpRole()
         );
     }
 
@@ -229,9 +272,10 @@ public class EmployeeService {
         for (LeaveSheetEntity leaveSheet : leaveSheetEntitiesList) {
             employeeLeave.add(
                     LeaveSheetResponseDTO.builder()
+                            .empID(empId)
                             .leaveID(leaveSheet.getLeaveType().getLeaveId())
                             .leaveName(leaveSheet.getLeaveType().getLeaveName())
-                            .allocatedDays(leaveSheet.getAllocatedDays())
+                            .allocatedDays(leaveSheet.getLeaveType().getNoDays())
                             .usedDays(leaveSheet.getUsedDays())
                             .remainingDays(leaveSheet.getRemainingDays())
                             .build()
@@ -290,12 +334,12 @@ public class EmployeeService {
             throw new RuntimeException("Invalid leave code");
         }
 
-        LeaveTypesCodes code = LeaveTypesCodes.valueOf(codeStr);
+
 
         LeaveSheetEntity leaveSheet =
                 leaveSheetRepository
                         .findByLeaveType_LeaveCodeAndOrganisation_OrgIDAndEmployee_EmpID(
-                                code,
+                                codeStr,
                                 orgId,
                                 empId
                         )
@@ -315,7 +359,7 @@ public class EmployeeService {
         LeaveSheetResponseDTO responseDTO = LeaveSheetResponseDTO.builder()
                 .leaveID(leaveSheet.getLeaveType().getLeaveId())
                 .leaveName(leaveSheet.getLeaveType().getLeaveName())
-                .allocatedDays(leaveSheet.getAllocatedDays())
+                .empID(empId)
                 .usedDays(leaveSheet.getUsedDays())
                 .remainingDays(leaveSheet.getRemainingDays())
                 .build();

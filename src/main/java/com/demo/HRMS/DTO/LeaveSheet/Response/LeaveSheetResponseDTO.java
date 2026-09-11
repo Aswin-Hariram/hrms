@@ -16,6 +16,7 @@ public class LeaveSheetResponseDTO {
 
 
     private Long leaveID;
+    private Long empID;
 
     private String leaveName;
 

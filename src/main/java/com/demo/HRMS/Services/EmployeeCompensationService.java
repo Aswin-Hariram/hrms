@@ -14,10 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +25,16 @@ public class EmployeeCompensationService {
 
     @Autowired
     private EmployeeCompensationRepository compensationRepository;
+
+    private final HierarchyService hierarchyService;
+
+    public EmployeeCompensationService(EmployeeRepository employeeRepository,
+                                       EmployeeCompensationRepository compensationRepository,
+                                       HierarchyService hierarchyService) {
+        this.employeeRepository = employeeRepository;
+        this.compensationRepository = compensationRepository;
+        this.hierarchyService = hierarchyService;
+    }
 
     private CompensationResponseDTO toDto(EmployeeCompensationEntity c) {
         if (c == null) return null;
@@ -157,33 +164,24 @@ public class EmployeeCompensationService {
     @Transactional
     public Map<String, Object> getReporteeCompensations(Long hrEmpId, Long orgId) {
 
-        EmployeeEntity hr = employeeRepository
-                .findByEmpIDAndOrganisation_OrgID(hrEmpId, orgId)
+        employeeRepository.findByEmpIDAndOrganisation_OrgID(hrEmpId, orgId)
                 .orElseThrow(() -> new RuntimeException("HR not found"));
 
-        List<EmployeeEntity> reportees = employeeRepository
-                .findAllByReportToHr_EmpIDAndOrganisation_OrgID(hrEmpId, orgId);
 
-        if (reportees.isEmpty()) {
-            return Map.of(
-                    "message", "Success",
-                    "count", 0,
-                    "data", List.of()
-            );
+        Set<Long> descendantIds = hierarchyService.getDescendantIds(hrEmpId, orgId);
+
+        if (descendantIds.isEmpty()) {
+            return Map.of("message", "Success", "count", 0, "data", List.of());
         }
 
-        List<Long> reporteeIds = reportees.stream()
-                .map(EmployeeEntity::getEmpID)
-                .toList();
+        List<EmployeeEntity> reportees =
+                employeeRepository.findAllById(descendantIds);
 
         List<EmployeeCompensationEntity> compensations = compensationRepository
-                .findAllByEmployee_EmpIDInAndActiveTrue(reporteeIds);
+                .findAllByEmployee_EmpIDInAndActiveTrue(new ArrayList<>(descendantIds));
 
         Map<Long, EmployeeCompensationEntity> compByEmpId = compensations.stream()
-                .collect(Collectors.toMap(
-                        c -> c.getEmployee().getEmpID(),
-                        c -> c
-                ));
+                .collect(Collectors.toMap(c -> c.getEmployee().getEmpID(), c -> c));
 
         List<ReporteeCompensationDTO> response = new ArrayList<>();
         for (EmployeeEntity emp : reportees) {
@@ -191,9 +189,7 @@ public class EmployeeCompensationService {
 
             ReporteeCompensationDTO dto = ReporteeCompensationDTO.builder()
                     .empID(emp.getEmpID())
-                    .employeeName(
-                            emp.getEmpFirstName() + " " + emp.getEmpLastName()
-                    )
+                    .employeeName(emp.getEmpFirstName() + " " + emp.getEmpLastName())
                     .employeeEmail(emp.getEmpEmail())
                     .hasCompensation(comp != null)
                     .build();
@@ -210,16 +206,10 @@ public class EmployeeCompensationService {
             response.add(dto);
         }
 
-        return Map.of(
-                "message", "Success",
-                "count", response.size(),
-                "data", response
-        );
+        return Map.of("message", "Success", "count", response.size(), "data", response);
     }
 
-    // -----------------------------------------------------------------
-    // Active compensation
-    // -----------------------------------------------------------------
+
     @Transactional
     public Map<String, Object> getActiveCompensation(Long empID, Long orgId) {
 

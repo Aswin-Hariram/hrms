@@ -22,7 +22,12 @@ import java.time.LocalDateTime;
         name = "LeaveTypes",
         uniqueConstraints = {
                 @UniqueConstraint(
+                        name = "uq_leave_name_per_org",
                         columnNames = {"orgID", "leave_Name"}
+                ),
+                @UniqueConstraint(
+                        name = "uq_leave_code_per_org",
+                        columnNames = {"orgID", "leave_Code"}
                 )
         }
 )
@@ -41,13 +46,13 @@ public class LeaveTypeEntity {
     @NotNull(message = "Leave name should be mentioned.")
     private String leaveName;
 
-    @NotNull
+
     @Min(value = 1, message = "Number of days must be at least 1")
     private int noDays;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LeaveTypesCodes leaveCode;
+    @NotNull(message = "Leave code should be mentioned.")
+    @Column(name = "leave_Code", nullable = false, length = 20)
+    private String leaveCode;
 
     @Column(nullable = false)
     private boolean isPaid;

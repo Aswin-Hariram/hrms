@@ -21,7 +21,7 @@ public class GetALL_LeaveTypeResponseDTO {
 
     private String leave_Name;
 
-    private LeaveTypesCodes leaveCode;
+    private String leaveCode;
 
     private boolean active;
 

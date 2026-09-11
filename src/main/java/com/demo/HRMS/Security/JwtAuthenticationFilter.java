@@ -93,6 +93,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             ));
         }
 
+        if (emp.getAuthorities() != null) {
+            emp.getAuthorities().forEach(authority ->
+
+                    System.out.println("Auth: "+authority)
+            );
+            emp.getAuthorities().forEach(authority ->
+
+                    authorities.add(
+                            new SimpleGrantedAuthority(authority.name())
+                    )
+            );
+        }
+
         return authorities;
     }
 }
