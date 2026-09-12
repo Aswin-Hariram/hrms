@@ -82,31 +82,19 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/requestLeave")
-    @PreAuthorize("hasAnyRole('EMPLOYEE','HR','SUPER_ADMIN')")
-    public ResponseEntity<?> leaveReq(
-            @RequestBody @Valid EmployeeLeaveReqDTO reqDTO,
-            Authentication authentication
-    ) {
-        String token = (String) authentication.getCredentials();
-        Long empID = service.extractID(token);
-        Long orgID = service.extractOrg(token);
 
-        Map<String, Object> res = empService.leaveReq(reqDTO, empID, orgID);
-        return ResponseEntity.ok(res);
-    }
 
-    @GetMapping("/allLeaveRequest")
-    @PreAuthorize("hasAnyRole('EMPLOYEE','HR','SUPER_ADMIN')")
-    public ResponseEntity<?> getAllRequest(Authentication authentication) {
-
-        String token = (String) authentication.getCredentials();
-        Long empID = service.extractID(token);
-        Long orgID = service.extractOrg(token);
-
-        Map<String, Object> response = empService.getAllRequest(empID, orgID);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/allLeaveRequest")
+//    @PreAuthorize("hasAnyRole('EMPLOYEE','HR','SUPER_ADMIN')")
+//    public ResponseEntity<?> getAllRequest(Authentication authentication) {
+//
+//        String token = (String) authentication.getCredentials();
+//        Long empID = service.extractID(token);
+//        Long orgID = service.extractOrg(token);
+//
+//        Map<String, Object> response = empService.getAllRequest(empID, orgID);
+//        return ResponseEntity.ok(response);
+//    }
 
     @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN')")
     @PostMapping("/{empID}/compensation")

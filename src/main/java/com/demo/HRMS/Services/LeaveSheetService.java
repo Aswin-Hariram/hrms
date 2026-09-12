@@ -57,6 +57,8 @@ public class LeaveSheetService {
                             .empID(leaveSheet.getEmployee().getEmpID())
                             .leaveID(leaveSheet.getLeaveType().getLeaveId())
                             .leaveName(leaveSheet.getLeaveType().getLeaveName())
+                            .isPaid(leaveSheet.getLeaveType().isPaid())
+                            .leaveCode(leaveSheet.getLeaveType().getLeaveCode())
                             .allocatedDays(leaveSheet.getLeaveType().getNoDays())
                             .usedDays(leaveSheet.getUsedDays())
                             .remainingDays(leaveSheet.getRemainingDays())

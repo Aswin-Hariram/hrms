@@ -91,4 +91,10 @@ public interface EmployeeRepository extends JpaRepository<EmployeeEntity, Long> 
             @Param("orgID") Long orgID,
             @Param("maxDepth") int maxDepth
     );
+
+
+    List<EmployeeEntity> findByOrganisation_OrgID(Long orgId);
+
+    List<EmployeeEntity> findByOrganisation_OrgIDAndDepartment_DepartmentId(
+            Long orgId, Long departmentId);
 }

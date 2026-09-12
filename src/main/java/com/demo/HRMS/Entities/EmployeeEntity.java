@@ -67,6 +67,11 @@ public class EmployeeEntity {
     @Min(18)
     private int age;
 
+    @Column(name = "yoe", nullable = false)
+    @Max(60)
+    private int yoe=0;
+
+
     @Column(name = "emp_joining_date", nullable = false)
     private LocalDate empJoiningDate;
 
@@ -75,10 +80,7 @@ public class EmployeeEntity {
     private EmploymentType empType;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "employee_authorities",
-            joinColumns = @JoinColumn(name = "emp_id")
-    )
+    @CollectionTable(name = "employee_authorities", joinColumns = @JoinColumn(name = "emp_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "authority", nullable = false)
     @Builder.Default
@@ -115,15 +117,18 @@ public class EmployeeEntity {
     @Column(name = "default_password_updated", nullable = false)
     private boolean defaultPasswordUpdated = false;
 
+    @Column(name = "last_salary_paid_date")
+    private LocalDate lastSalaryPaidDate;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Builder.Default
-    @Column(name = "is_active_leave_request", nullable = false)
-    private boolean isActiveLeaveRequest = false;
+
 }

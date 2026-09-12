@@ -203,6 +203,7 @@ public class EmployeeService {
                 .empPassword(passwordEncoder.encode(defaultPassword))
                 .empDOB(request.getEmpDOB())
                 .age(request.getAge())
+                .yoe(request.getYoe()!=null?request.getYoe():0)
                 .empJoiningDate(request.getEmpJoiningDate())
                 .empType(EmploymentType.valueOf(request.getEmpType().toUpperCase()))
                 .empStatus(STATUS_ACTIVE)
@@ -277,6 +278,7 @@ public class EmployeeService {
                             .leaveName(leaveSheet.getLeaveType().getLeaveName())
                             .allocatedDays(leaveSheet.getLeaveType().getNoDays())
                             .usedDays(leaveSheet.getUsedDays())
+                            .leaveCode(leaveSheet.getLeaveType().getLeaveCode())
                             .remainingDays(leaveSheet.getRemainingDays())
                             .build()
             );
@@ -294,6 +296,7 @@ public class EmployeeService {
                 .empPhoneNumber(employee.getEmpPhoneNumber())
                 .empDOB(employee.getEmpDOB())
                 .age(employee.getAge())
+
                 .empJoiningDate(employee.getEmpJoiningDate())
                 .empType(employee.getEmpType().name())
                 .empStatus(EmployeeStatus.ACTIVE.name())
@@ -309,130 +312,52 @@ public class EmployeeService {
     }
 
 
-    @Transactional
-    public Map<String, Object> leaveReq(EmployeeLeaveReqDTO reqDTO, Long empId, Long orgId) {
-
-        EmployeeEntity employee = emp_repo
-                .findByEmpIDAndOrganisation_OrgID(empId, orgId)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        if (employee.isActiveLeaveRequest()) {
-            throw new RuntimeException("Leave request already exists");
-        }
-
-        if (employee.getReportToHr() == null) {
-            throw new RuntimeException("Employee does not have a reporting HR");
-        }
-
-        if (reqDTO.getEndDate().isBefore(reqDTO.getStartDate())) {
-            throw new RuntimeException("End date cannot be before start date");
-        }
-
-        String codeStr = reqDTO.getLeaveCode().toUpperCase();
-        if (Arrays.stream(LeaveTypesCodes.values())
-                .noneMatch(code -> code.name().equalsIgnoreCase(codeStr))) {
-            throw new RuntimeException("Invalid leave code");
-        }
 
 
-
-        LeaveSheetEntity leaveSheet =
-                leaveSheetRepository
-                        .findByLeaveType_LeaveCodeAndOrganisation_OrgIDAndEmployee_EmpID(
-                                codeStr,
-                                orgId,
-                                empId
-                        )
-                        .orElseThrow(() -> new RuntimeException("Invalid request"));
-
-        int noOfDays = (int) (
-                ChronoUnit.DAYS.between(
-                        reqDTO.getStartDate(),
-                        reqDTO.getEndDate()
-                ) + 1
-        );
-
-        if (noOfDays > leaveSheet.getRemainingDays()) {
-            throw new RuntimeException("Insufficient available days.");
-        }
-
-        LeaveSheetResponseDTO responseDTO = LeaveSheetResponseDTO.builder()
-                .leaveID(leaveSheet.getLeaveType().getLeaveId())
-                .leaveName(leaveSheet.getLeaveType().getLeaveName())
-                .empID(empId)
-                .usedDays(leaveSheet.getUsedDays())
-                .remainingDays(leaveSheet.getRemainingDays())
-                .build();
-
-        LeaveRequestEntity request = LeaveRequestEntity.builder()
-                .employee(employee)
-                .organisation(employee.getOrganisation())
-                .startDate(reqDTO.getStartDate())
-                .endDate(reqDTO.getEndDate())
-                .leaveSheet(leaveSheet)
-                .reason(reqDTO.getReason())
-                .status(LeaveRequestStatus.SUBMITTED)
-                .noOfDays(noOfDays)
-                .requestedTo(employee.getReportToHr())
-                .build();
-
-        LeaveRequestEntity savedRequest = leaveRequestRepository.save(request);
-
-        employee.setActiveLeaveRequest(true);
-        emp_repo.save(employee);
-
-        return Map.of(
-                "message", "success",
-                "data", responseDTO,
-                "Days req", noOfDays,
-                "Request ID", savedRequest.getRequestID()
-        );
-    }
-
-    public Map<String, Object> getAllRequest(Long empId, Long orgId) {
-
-        EmployeeEntity employee = emp_repo
-                .findByEmpIDAndOrganisation_OrgID(empId, orgId)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        List<LeaveRequestEntity> allLeaveRequest =
-                leaveRequestRepository
-                        .findAllByOrganisation_OrgIDAndEmployee_EmpID(orgId, empId);
-
-        List<LeaveRequestResponseDTO> response = allLeaveRequest.stream()
-                .map(request -> LeaveRequestResponseDTO.builder()
-                        .requestID(request.getRequestID())
-                        .empID(request.getEmployee().getEmpID())
-                        .employeeName(
-                                request.getEmployee().getEmpFirstName()
-                                        + " "
-                                        + request.getEmployee().getEmpLastName()
-                        )
-                        .orgID(request.getOrganisation().getOrgID())
-                        .leaveID(request.getRequestID())
-                        .noOfDays(request.getNoOfDays())
-                        .leaveName(
-                                request.getLeaveSheet().getLeaveType().getLeaveName()
-                        )
-                        .startDate(request.getStartDate())
-                        .endDate(request.getEndDate())
-                        .status(request.getStatus())
-                        .reason(request.getReason())
-                        .requestedToEmpID(request.getRequestedTo().getEmpID())
-                        .requestedToName(
-                                request.getRequestedTo().getEmpFirstName()
-                                        + " "
-                                        + request.getRequestedTo().getEmpLastName()
-                        )
-                        .requestedAt(request.getRequestedAt())
-                        .updatedAt(request.getUpdatedAt())
-                        .build()
-                )
-                .toList();
-
-        return Map.of(
-                "message", "success",
-                "data", response
-        );
-    }
+//    public Map<String, Object> getAllRequest(Long empId, Long orgId) {
+//
+//        EmployeeEntity employee = emp_repo
+//                .findByEmpIDAndOrganisation_OrgID(empId, orgId)
+//                .orElseThrow(() -> new RuntimeException("Employee not found"));
+//
+//        List<LeaveRequestEntity> allLeaveRequest =
+//                leaveRequestRepository
+//                        .findAllByOrganisation_OrgIDAndEmployee_EmpID(orgId, empId);
+//
+//        List<LeaveRequestResponseDTO> response = allLeaveRequest.stream()
+//                .map(request -> LeaveRequestResponseDTO.builder()
+//                        .requestID(request.getRequestID())
+//                        .empID(request.getEmployee().getEmpID())
+//                        .employeeName(
+//                                request.getEmployee().getEmpFirstName()
+//                                        + " "
+//                                        + request.getEmployee().getEmpLastName()
+//                        )
+//                        .orgID(request.getOrganisation().getOrgID())
+//                        .leaveID(request.getRequestID())
+//                        .noOfDays(request.getNoOfDays())
+//                        .leaveName(
+//                                request.getLeaveSheet().getLeaveType().getLeaveName()
+//                        )
+//                        .startDate(request.getStartDate())
+//                        .endDate(request.getEndDate())
+//                        .status(request.getStatus())
+//                        .reason(request.getReason())
+//                        .requestedToEmpID(request.getRequestedTo().getEmpID())
+//                        .requestedToName(
+//                                request.getRequestedTo().getEmpFirstName()
+//                                        + " "
+//                                        + request.getRequestedTo().getEmpLastName()
+//                        )
+//                        .requestedAt(request.getRequestedAt())
+//                        .updatedAt(request.getUpdatedAt())
+//                        .build()
+//                )
+//                .toList();
+//
+//        return Map.of(
+//                "message", "success",
+//                "data", response
+//        );
+//    }
 }

@@ -23,4 +23,9 @@ public interface EmployeeCompensationRepository
             ORDER BY c.effectiveFrom DESC
             """)
     List<EmployeeCompensationEntity> findHistoryByEmployeeId(@Param("empID") Long empID);
+
+
+    Optional<EmployeeCompensationEntity>
+    findFirstByEmployee_EmpIDAndEmployee_Organisation_OrgIDAndActiveTrueOrderByEffectiveFromDesc(
+            Long empID, Long orgId);
 }

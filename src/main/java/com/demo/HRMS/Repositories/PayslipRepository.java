@@ -3,65 +3,33 @@ package com.demo.HRMS.Repositories;
 import com.demo.HRMS.Entities.PayslipEntity;
 import com.demo.HRMS.Types.PayslipStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface PayslipRepository extends JpaRepository<PayslipEntity, Long> {
 
-    Optional<PayslipEntity> findByEmployee_EmpIDAndPayMonthAndPayYear(
-            Long empId, int payMonth, int payYear);
+    Optional<PayslipEntity> findByEmployee_EmpIDAndOrganisation_OrgIDAndPeriodStartAndPeriodEnd(
+            Long empID, Long orgId, LocalDate periodStart, LocalDate periodEnd);
 
-    List<PayslipEntity> findByEmployee_EmpIDOrderByPayYearDescPayMonthDesc(Long empId);
+    List<PayslipEntity> findByEmployee_EmpIDAndOrganisation_OrgIDOrderByPeriodEndDesc(
+            Long empID, Long orgId);
 
-    List<PayslipEntity> findByOrganisation_OrgIdAndPayMonthAndPayYear(
-            Long orgId, int payMonth, int payYear);
+    List<PayslipEntity> findByOrganisation_OrgIDAndDepartment_DepartmentIdAndPeriodEnd(
+            Long orgId, Long departmentId, LocalDate periodEnd);
 
-    List<PayslipEntity> findByOrganisation_OrgIdAndStatus(
+    Optional<PayslipEntity> findByPayslipIdAndOrganisation_OrgID(Long payslipId, Long orgId);
+
+    List<PayslipEntity> findByOrganisation_OrgIDAndStatus(
             Long orgId, PayslipStatus status);
 
-    boolean existsByEmployee_EmpIDAndPayMonthAndPayYear(
-            Long empId, int payMonth, int payYear);
+    List<PayslipEntity> findByOrganisation_OrgIDAndDepartment_DepartmentIdAndStatus(
+            Long orgId, Long departmentId, PayslipStatus status);
 
-    @Query("SELECT p FROM PayslipEntity p " +
-            "WHERE p.organisation.orgID = :orgId " +
-            "AND p.payYear = :year " +
-            "ORDER BY p.payMonth DESC")
-    List<PayslipEntity> findByOrgAndYear(
-            @Param("orgId") Long orgId,
-            @Param("year") int year);
+    List<PayslipEntity> findByOrganisation_OrgIDAndStatusAndPeriodEndBetween(
+            Long orgId, PayslipStatus status,
+            LocalDate from, LocalDate to);
 
-
-    @Query("SELECT p FROM PayslipEntity p " +
-            "JOIN FETCH p.employee e " +
-            "LEFT JOIN FETCH e.department " +
-            "LEFT JOIN FETCH e.designation " +
-            "LEFT JOIN FETCH p.compensation " +
-            "WHERE p.payslipId = :id")
-    Optional<PayslipEntity> findByIdWithDetails(@Param("id") Long id);
-
-    @Query("SELECT p FROM PayslipEntity p " +
-            "JOIN FETCH p.employee e " +
-            "LEFT JOIN FETCH e.department " +
-            "LEFT JOIN FETCH e.designation " +
-            "LEFT JOIN FETCH p.compensation " +
-            "WHERE e.empID = :empId " +
-            "ORDER BY p.payYear DESC, p.payMonth DESC")
-    List<PayslipEntity> findByEmployeeWithDetails(@Param("empId") Long empId);
-
-    @Query("SELECT p FROM PayslipEntity p " +
-            "JOIN FETCH p.employee e " +
-            "LEFT JOIN FETCH e.department " +
-            "LEFT JOIN FETCH e.designation " +
-            "LEFT JOIN FETCH p.compensation " +
-            "WHERE p.organisation.orgID = :orgId " +
-            "AND p.payMonth = :month AND p.payYear = :year")
-    List<PayslipEntity> findByOrgAndPeriodWithDetails(
-            @Param("orgId") Long orgId,
-            @Param("month") int month,
-            @Param("year") int year);
+    List<PayslipEntity> findByOrganisation_OrgID(Long organisationOrgID);
 }

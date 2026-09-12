@@ -16,4 +16,8 @@ public interface DepartmentRepository extends JpaRepository<DepartmentEntity,Lon
 
     boolean existsByDepartmentNameIgnoreCaseAndOrganisation_OrgID(String departmentName, Long organisationOrgID);
 
+
+    Optional<DepartmentEntity> findByDepartmentIdAndOrganisation_OrgID(
+            Long departmentId, Long orgId);
+
 }

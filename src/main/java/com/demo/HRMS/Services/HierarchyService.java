@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class HierarchyService {
 
 
-    public static final int MAX_DEPTH = 5;
+    public static final int MAX_DEPTH = 3;
 
     private final EmployeeRepository employeeRepository;
 

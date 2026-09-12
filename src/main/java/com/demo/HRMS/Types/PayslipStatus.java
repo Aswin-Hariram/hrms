@@ -1,8 +1,8 @@
 package com.demo.HRMS.Types;
 
+
 public enum PayslipStatus {
-    DRAFT,
-    GENERATED,
+    SUBMITTED,
     APPROVED,
     PAID,
     CANCELLED

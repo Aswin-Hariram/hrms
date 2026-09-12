@@ -20,6 +20,8 @@ public class LeaveSheetResponseDTO {
 
     private String leaveName;
 
+    private String leaveCode;
+    private boolean isPaid;
     private int allocatedDays;
     private int usedDays;
     private int remainingDays;

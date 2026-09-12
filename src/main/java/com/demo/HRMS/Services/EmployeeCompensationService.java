@@ -137,6 +137,7 @@ public class EmployeeCompensationService {
         EmployeeCompensationEntity revision = EmployeeCompensationEntity.builder()
                 .employee(employee)
                 .payType(dto.getPayType())
+                .hra(dto.getHra())
                 .hourlyRate(dto.getHourlyRate())
                 .stipend(dto.getStipend())
                 .basicSalary(dto.getBasicSalary())

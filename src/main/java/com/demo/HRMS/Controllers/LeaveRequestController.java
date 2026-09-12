@@ -1,7 +1,10 @@
 package com.demo.HRMS.Controllers;
 
+import com.demo.HRMS.DTO.Employee.EmployeeLeaveReqDTO;
+import com.demo.HRMS.DTO.LeaveRequest.LeaveHistoryRequest;
 import com.demo.HRMS.Security.JwtService;
 import com.demo.HRMS.Services.LeaveRequestService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +22,21 @@ public class LeaveRequestController {
 
     @Autowired
     private LeaveRequestService leaveRequestService;
+
+
+    @PostMapping("/requestLeave")
+    @PreAuthorize("hasAuthority('BASIC')")
+    public ResponseEntity<?> leaveReq(
+            @RequestBody @Valid EmployeeLeaveReqDTO reqDTO,
+            Authentication authentication
+    ) {
+        String token = (String) authentication.getCredentials();
+        Long empID = jwtService.extractID(token);
+        Long orgID = jwtService.extractOrg(token);
+
+        Map<String, Object> res = leaveRequestService.leaveReq(reqDTO, empID, orgID);
+        return ResponseEntity.ok(res);
+    }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','HR')")
     @GetMapping("/getRequestedLeaves")
@@ -61,6 +79,23 @@ public class LeaveRequestController {
 
         Map<String, Object> response =
                 leaveRequestService.rejectLeave(reqId, hrId, orgID, reason);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasAnyRole('EMPLOYEE','HR','SUPER_ADMIN')")
+    @PostMapping("/getLeaveHistory")
+    public ResponseEntity<?> getLeaveHistory(
+            @Valid @RequestBody LeaveHistoryRequest request,
+
+            Authentication authentication) {
+
+
+        String token = (String) authentication.getCredentials();
+        Long hrId = jwtService.extractID(token);
+        Long orgID = jwtService.extractOrg(token);
+
+        Map<String, Object> response =
+                leaveRequestService.getLeaveHistory(request.getEmpId(), hrId, orgID,request.getFromDate(),request.getEndDate());
         return ResponseEntity.ok(response);
     }
 }

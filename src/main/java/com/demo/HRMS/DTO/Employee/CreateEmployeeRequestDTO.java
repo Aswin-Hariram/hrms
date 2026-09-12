@@ -38,6 +38,9 @@ public class CreateEmployeeRequestDTO {
     @Max(value = 60, message = "Age must not exceed 60")
     private Integer age;
 
+
+    private Integer yoe=0;
+
     @NotNull(message = "Joining date is required")
     private LocalDate empJoiningDate;
 

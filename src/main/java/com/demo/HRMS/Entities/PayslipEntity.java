@@ -1,5 +1,7 @@
 package com.demo.HRMS.Entities;
 
+import com.demo.HRMS.Types.EmploymentType;
+import com.demo.HRMS.Types.PayType;
 import com.demo.HRMS.Types.PayslipStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,9 +15,15 @@ import java.time.LocalDateTime;
 @Table(
         name = "Payslip",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_payslip_emp_month_year",
-                columnNames = {"empID", "pay_month", "pay_year"}
-        )
+                name = "uk_payslip_org_emp_period",
+                columnNames = {"org_id", "empID", "period_start", "period_end"}
+        ),
+        indexes = {
+                @Index(name = "idx_payslip_org_emp",  columnList = "org_id, empID"),
+                @Index(name = "idx_payslip_org_dept", columnList = "org_id, department_id"),
+                @Index(name = "idx_payslip_org_status", columnList = "org_id, status"),
+                @Index(name = "idx_payslip_org_period_end", columnList = "org_id, period_end")
+        }
 )
 @Getter
 @Setter
@@ -33,77 +41,95 @@ public class PayslipEntity {
     private EmployeeEntity employee;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "orgID", nullable = false)
+    @JoinColumn(name = "department_id", nullable = false)
+    private DepartmentEntity department;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "org_id", nullable = false)
     private OrganisationEntity organisation;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "compensationId")
-    private EmployeeCompensationEntity compensation;
-
-    @Column(name = "pay_month", nullable = false)
-    private int payMonth;
-
-    @Column(name = "pay_year", nullable = false)
-    private int payYear;
-
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LocalDate periodStart;
-
-    @Column(nullable = false)
-    private LocalDate periodEnd;
-
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal overtimePay = BigDecimal.ZERO;
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal bonus = BigDecimal.ZERO;
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal grossEarnings = BigDecimal.ZERO;
-
-
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal taxAmount = BigDecimal.ZERO;
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal otherDeductions = BigDecimal.ZERO;
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal totalDeductions = BigDecimal.ZERO;
-
-
-    @Column(precision = 12, scale = 2, nullable = false)
-    private BigDecimal netPay = BigDecimal.ZERO;
-
-
-    @Column(nullable = false)
-    private int totalWorkingDays = 0;
-
-    @Column(nullable = false)
-    private int daysPresent = 0;
-
-    @Column(nullable = false)
-    private int leavesTaken = 0;
-
-    @Column(nullable = false)
-    private int unpaidLeaves = 0;
+    private EmploymentType employmentType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private PayslipStatus status = PayslipStatus.DRAFT;
-
     @Column(nullable = false)
-    private LocalDate generatedDate;
+    private PayType payType;
 
-    private LocalDate paidDate;
+    @Column(name = "period_start", nullable = false)
+    private LocalDate periodStart;
 
-    @Column(length = 500)
-    private String remarks;
+    @Column(name = "period_end", nullable = false)
+    private LocalDate periodEnd;
+
+    @Column(name = "total_days", nullable = false)
+    private int totalDays;
+
+    @Column(name = "paid_days", nullable = false)
+    private int paidDays;
+
+    @Column(name = "unpaidLeaveDays", nullable = false)
+    private int unpaidLeaveDays;
+
+    @Builder.Default
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal basicSalary = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal hra = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal stipend = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal hourlyRate = BigDecimal.ZERO;
+
+    @Column(name = "hourly_hours", precision = 8, scale = 2)
+    private BigDecimal hourlyHours;
+
+    @Builder.Default
+    @Column(precision = 14, scale = 2, nullable = false)
+    private BigDecimal grossPay = BigDecimal.ZERO;
+
+
+    @Column(name = "pf_percentage", precision = 5, scale = 2)
+    private BigDecimal pfPercentage;
+
+    @Builder.Default
+    @Column(name = "pf_amount", precision = 12, scale = 2, nullable = false)
+    private BigDecimal pfAmount = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(name = "net_pay", precision = 14, scale = 2, nullable = false)
+    private BigDecimal netPay = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PayslipStatus status = PayslipStatus.SUBMITTED;
+
+    @Column(name = "approved_by")
+    private Long approvedByEmpId;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "paid_by")
+    private Long paidByEmpId;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    @Column(name = "payment_mode", length = 30)
+    private String paymentMode;         // NEFT / IMPS / UPI / CASH
+
+    @Column(name = "payment_reference", length = 100)
+    private String paymentReference;    // UTR / cheque no / UPI ref
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "generated_at", nullable = false, updatable = false)
+    private LocalDateTime generatedAt;
 }
