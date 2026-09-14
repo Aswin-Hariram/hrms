@@ -39,18 +39,18 @@ public class OrganisationService {
     @Transactional
     public Map<String, Object> register(OrganisationEntity organisation) {
 
-        if (org_repo.existsByOrgEmail(organisation.getOrgEmail())) {
+        if (org_repo.existsByOrgEmailIgnoreCase(organisation.getOrgEmail())) {
             throw new DataIntegrityViolationException(
                     "Organisation with this email already exists"
             );
         }
 
-        organisation.setOrgStatus("NOT ACTIVE");
+        organisation.setOrgStatus("ACTIVE");
         org_repo.save(organisation);
 
         EmployeeEntity superAdmin = new EmployeeEntity();
         superAdmin.setOrganisation(organisation);
-        superAdmin.setEmpFirstName("System");
+        superAdmin.setEmpFirstName("Admin");
         superAdmin.setEmpLastName("Admin");
         superAdmin.setEmpEmail(organisation.getOrgEmail());
         superAdmin.setEmpPassword(

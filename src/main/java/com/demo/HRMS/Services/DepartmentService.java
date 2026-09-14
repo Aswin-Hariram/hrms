@@ -26,9 +26,9 @@ public class DepartmentService {
     }
 
     @Transactional
-    public Map<String, Object> createDepartment(CreateDepartmentRequest request) {
+    public Map<String, Object> createDepartment(CreateDepartmentRequest request,Long orgID) {
 
-        Long orgID = request.getOrgID();
+
 
         if (dep_repo.existsByDepartmentNameIgnoreCaseAndOrganisation_OrgID(
                 request.getDepartmentName(),

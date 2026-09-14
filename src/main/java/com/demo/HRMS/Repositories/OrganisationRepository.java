@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface OrganisationRepository extends JpaRepository<OrganisationEntity, Long> {
 
 
-    boolean existsByOrgEmail(String email);
+    boolean existsByOrgEmailIgnoreCase(String email);
 }

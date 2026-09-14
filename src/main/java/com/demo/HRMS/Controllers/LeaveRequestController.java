@@ -2,6 +2,8 @@ package com.demo.HRMS.Controllers;
 
 import com.demo.HRMS.DTO.Employee.EmployeeLeaveReqDTO;
 import com.demo.HRMS.DTO.LeaveRequest.LeaveHistoryRequest;
+import com.demo.HRMS.DTO.LeaveRequest.RejectRequestDTO;
+import com.demo.HRMS.Security.AuthenticatedUser;
 import com.demo.HRMS.Security.JwtService;
 import com.demo.HRMS.Services.LeaveRequestService;
 import jakarta.validation.Valid;
@@ -30,11 +32,10 @@ public class LeaveRequestController {
             @RequestBody @Valid EmployeeLeaveReqDTO reqDTO,
             Authentication authentication
     ) {
-        String token = (String) authentication.getCredentials();
-        Long empID = jwtService.extractID(token);
-        Long orgID = jwtService.extractOrg(token);
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
-        Map<String, Object> res = leaveRequestService.leaveReq(reqDTO, empID, orgID);
+        assert user != null;
+        Map<String, Object> res = leaveRequestService.leaveReq(reqDTO, user.employeeId(), user.organisationId());
         return ResponseEntity.ok(res);
     }
 
@@ -69,8 +70,7 @@ public class LeaveRequestController {
     @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN')")
     @PostMapping("/reject")
     public ResponseEntity<?> rejectRequestedLeave(
-            @RequestParam Long reqId,
-            @RequestParam String reason,
+            @RequestBody @Valid RejectRequestDTO rejectReq,
             Authentication authentication) {
 
         String token = (String) authentication.getCredentials();
@@ -78,7 +78,22 @@ public class LeaveRequestController {
         Long orgID = jwtService.extractOrg(token);
 
         Map<String, Object> response =
-                leaveRequestService.rejectLeave(reqId, hrId, orgID, reason);
+                leaveRequestService.rejectLeave(rejectReq, hrId, orgID);
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN','EMPLOYEE')")
+    @PostMapping("/revoke")
+    public ResponseEntity<?> revokeLeave(
+            @RequestParam Long reqId,
+            Authentication authentication) {
+
+        String token = (String) authentication.getCredentials();
+        Long selfID = jwtService.extractID(token);
+        Long orgID = jwtService.extractOrg(token);
+
+        Map<String, Object> response =
+                leaveRequestService.revokeLeave(reqId, selfID, orgID);
         return ResponseEntity.ok(response);
     }
 

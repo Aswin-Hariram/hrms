@@ -11,8 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateLeaveTypeDTO {
 
-    @NotNull(message = "Organisation ID is required.")
-    private Long orgID;
+
 
     @NotBlank(message = "Leave name should be mentioned.")
     private String leaveName;

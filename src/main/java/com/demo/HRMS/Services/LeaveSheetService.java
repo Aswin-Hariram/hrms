@@ -11,7 +11,6 @@ import com.demo.HRMS.Repositories.LeaveTypeRepository;
 import com.demo.HRMS.Repositories.OrganisationRepository;
 import com.demo.HRMS.Types.EmployeeRole;
 import jakarta.transaction.Transactional;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -70,21 +69,17 @@ public class LeaveSheetService {
     }
 
     @Transactional
-    public Map<String, Object> createLeave(CreateLeaveSheetDTO request) {
+    public Map<String, Object> assignLeave(CreateLeaveSheetDTO request, Long loggedEmpId, Long orgId) {
 
         if (request.getLeaveIDs() == null || request.getLeaveIDs().isEmpty()) {
             throw new RuntimeException("At least one leave ID is required");
         }
 
-        Long loggedEmpId = Long.valueOf(
-                SecurityContextHolder.getContext().getAuthentication().getName()
-        );
-
         EmployeeEntity loggedEmployee = employeeRepository
-                .findByEmpIDAndOrganisation_OrgID(loggedEmpId, request.getOrgID())
+                .findByEmpIDAndOrganisation_OrgID(loggedEmpId,orgId)
                 .orElseThrow(() -> new RuntimeException("Logged-in user not found"));
 
-        Long orgId = loggedEmployee.getOrganisation().getOrgID();
+
 
         EmployeeEntity employee = employeeRepository
                 .findByEmpIDAndOrganisation_OrgID(request.getEmpID(), orgId)
@@ -92,8 +87,7 @@ public class LeaveSheetService {
 
 
         boolean isSuperAdmin = loggedEmployee.getEmpRole() == EmployeeRole.SUPER_ADMIN;
-        boolean isAncestor = hierarchyService.isManagerOf(
-                loggedEmpId, employee.getEmpID(), orgId);
+        boolean isAncestor = hierarchyService.isManagerOf(loggedEmpId, request.getEmpID(), orgId);
 
         if (!isSuperAdmin && !isAncestor) {
             throw new RuntimeException("You are not permitted to access this employee");

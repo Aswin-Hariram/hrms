@@ -1,11 +1,9 @@
 package com.demo.HRMS.Services;
 
 import com.demo.HRMS.DTO.Employee.CreateEmployeeRequestDTO;
-import com.demo.HRMS.DTO.Employee.EmployeeLeaveReqDTO;
 import com.demo.HRMS.DTO.Employee.EmployeeLoginRequest;
 import com.demo.HRMS.DTO.Employee.EmployeeResetPassword;
 import com.demo.HRMS.DTO.Employee.Response.GetEmployeeProfileDTO;
-import com.demo.HRMS.DTO.Employee.Response.LeaveRequestResponseDTO;
 import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
 import com.demo.HRMS.Entities.*;
 import com.demo.HRMS.Repositories.*;
@@ -17,7 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -102,6 +99,9 @@ public class EmployeeService {
                 )
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
+        if (!employee.isDefaultPasswordUpdated()) {
+            throw new RuntimeException("Reset default password before login");
+        }
         if (!passwordEncoder.matches(
                 request.getEmpPassword(),
                 employee.getEmpPassword()
@@ -109,9 +109,7 @@ public class EmployeeService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        if (!employee.isDefaultPasswordUpdated()) {
-            throw new RuntimeException("Reset default password before login");
-        }
+
 
         if (employee.getEmpStatus() != EmployeeStatus.ACTIVE) {
             throw new RuntimeException("Request your HR to update your status");
@@ -119,6 +117,8 @@ public class EmployeeService {
 
         String accessToken  = jwtService.genAccessToken(employee);
         RefreshTokenEntity refreshToken = refreshTokenService.createRefreshToken(employee);
+
+        // TODO : save activity in activity table
 
         return Map.of(
                 "message",      "Login successful",
@@ -131,12 +131,12 @@ public class EmployeeService {
     }
 
     @Transactional
-    public Map<String, Object> createEmployee(CreateEmployeeRequestDTO request) {
+    public Map<String, Object> createEmployee(CreateEmployeeRequestDTO request, Long orgId) {
 
 
         if (emp_repo.existsByEmpEmailAndOrganisation_OrgID(
                 request.getEmpEmail(),
-                request.getOrgID()
+                orgId
         )) {
             throw new DataIntegrityViolationException(
                     "Employee already exists with same email in this organisation"
@@ -147,40 +147,25 @@ public class EmployeeService {
             throw new RuntimeException("Invalid role");
         }
 
-        OrganisationEntity organisation = org_repo.findById(request.getOrgID())
+        OrganisationEntity organisation = org_repo.findById(orgId)
                 .orElseThrow(() -> new RuntimeException("Organisation not found"));
 
         DesignationEntity designation = null;
         if (request.getDesignationId() != null) {
-            designation = desg_repo.findById(request.getDesignationId())
+            designation = desg_repo.findByOrganisation_OrgIDAndDesignationId(orgId,request.getDesignationId())
                     .orElseThrow(() -> new RuntimeException("Designation not found"));
-            if (!Objects.equals(
-                    designation.getOrganisation().getOrgID(),
-                    request.getOrgID()
-            )) {
-                throw new RuntimeException("Designation does not belong to this organisation");
-            }
         }
 
         DepartmentEntity department = null;
         if (request.getDepartmentId() != null) {
-            department = dep_repo.findById(request.getDepartmentId())
+            department = dep_repo.findByDepartmentIdAndOrganisation_OrgID(request.getDepartmentId(),orgId)
                     .orElseThrow(() -> new RuntimeException("Department not found"));
-            if (!Objects.equals(
-                    department.getOrganisation().getOrgID(),
-                    request.getOrgID()
-            )) {
-                throw new RuntimeException("Department does not belong to this organisation");
-            }
         }
 
         EmployeeEntity reportToHr = null;
         if (request.getReportToHr() != null) {
-            reportToHr = emp_repo.findById(request.getReportToHr())
+            reportToHr = emp_repo.findByEmpIDAndOrganisation_OrgID(request.getReportToHr(),orgId)
                     .orElseThrow(() -> new RuntimeException("Report-to HR not found"));
-            if (!Objects.equals(reportToHr.getOrganisation().getOrgID(), request.getOrgID())) {
-                throw new RuntimeException("Report-to HR does not belong to this organisation");
-            }
         }
 
 

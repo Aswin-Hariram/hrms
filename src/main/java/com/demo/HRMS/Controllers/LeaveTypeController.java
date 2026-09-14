@@ -1,6 +1,7 @@
 package com.demo.HRMS.Controllers;
 
 import com.demo.HRMS.DTO.LeaveType.CreateLeaveTypeDTO;
+import com.demo.HRMS.Security.AuthenticatedUser;
 import com.demo.HRMS.Security.JwtService;
 import com.demo.HRMS.Services.LeaveTypeService;
 import jakarta.validation.Valid;
@@ -27,8 +28,11 @@ public class LeaveTypeController {
 
     @PreAuthorize("hasAnyRole('HR','SUPER_ADMIN')")
     @PostMapping("/createLeaveType")
-    public ResponseEntity<?> createLeaveType(@RequestBody @Valid CreateLeaveTypeDTO request) {
-        Map<String, Object> response = leaveTypeService.createLeaveType(request);
+    public ResponseEntity<?> createLeaveType(@RequestBody @Valid CreateLeaveTypeDTO request,Authentication authentication) {
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        assert user!=null;
+        Long orgId = user.organisationId();
+        Map<String, Object> response = leaveTypeService.createLeaveType(request,orgId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

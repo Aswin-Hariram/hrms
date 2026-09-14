@@ -31,6 +31,7 @@ public class DefaultSalaryCalculator  {
     private static final BigDecimal HOURS_PER_DAY = BigDecimal.valueOf(8);
 
 
+
     public PayslipEntity calculate(EmployeeEntity employee,
                                    EmployeeCompensationEntity comp,
                                    LocalDate periodStart,

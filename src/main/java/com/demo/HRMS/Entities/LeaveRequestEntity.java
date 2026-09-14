@@ -59,6 +59,12 @@ public class LeaveRequestEntity {
     @JoinColumn(name = "requestedToEmpID", nullable = false)
     private EmployeeEntity requestedTo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approvedBy", nullable = false)
+    private EmployeeEntity approvedBy;
+
+    private String rejectReason;
+
 
     @Column(nullable = false)
     @CreationTimestamp

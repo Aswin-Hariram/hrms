@@ -12,8 +12,5 @@ public class CreateDepartmentRequest {
     @NotBlank(message = "Department Name must not be empty.")
     String departmentName;
 
-    @NotNull(message = "Organisation ID must not be null.")
-    Long orgID;
-
 
 }

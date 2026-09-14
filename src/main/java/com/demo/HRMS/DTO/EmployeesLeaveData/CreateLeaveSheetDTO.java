@@ -17,10 +17,6 @@ public class CreateLeaveSheetDTO {
     @NotNull(message = "Employee ID is required")
     private Long empID;
 
-
-    @NotNull(message = "Organisation ID is required")
-    private Long orgID;
-
     @NotEmpty(message = "Leave IDs are required")
     private List<Long> leaveIDs;
 

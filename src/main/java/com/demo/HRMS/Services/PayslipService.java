@@ -5,7 +5,8 @@ import com.demo.HRMS.Entities.EmployeeCompensationEntity;
 import com.demo.HRMS.Entities.EmployeeEntity;
 import com.demo.HRMS.Entities.PayslipEntity;
 import com.demo.HRMS.Repositories.*;
-import com.demo.HRMS.Services.Payroll.DefaultSalaryCalculator;
+import com.demo.HRMS.Services.Payroll.SalaryCalculator;
+import com.demo.HRMS.Services.Payroll.SalaryCalculatorFinder;
 import com.demo.HRMS.Types.EmployeeStatus;
 import com.demo.HRMS.Types.LeaveRequestStatus;
 import com.demo.HRMS.Types.PayslipStatus;
@@ -29,7 +30,7 @@ public class PayslipService{
     private final EmployeeCompensationRepository compensationRepository;
     private final PayslipRepository payslipRepository;
     private final DepartmentRepository departmentRepository;
-    private final DefaultSalaryCalculator salaryCalculator;
+    private final SalaryCalculatorFinder salaryCalculatorFactory;
     private final LeaveRequestRepository leaveRequestRepository;
 
 
@@ -172,12 +173,17 @@ public class PayslipService{
                 periodEnd,
                 false
         );
+        SalaryCalculator salaryCalculator = salaryCalculatorFactory.getCalculator(employee.getEmpType());
+
+
+
         PayslipEntity payslip = salaryCalculator.calculate(
-                employee, comp, periodStart, periodEnd,leaveday);
-
-
-
-        payslip.setUnpaidLeaveDays(leaveday);
+                employee,
+                comp,
+                periodStart,
+                periodEnd,
+                leaveday
+        );
 
         if (payslip.getPaidDays() <= 0) {
             throw new IllegalStateException("No payable days in period");

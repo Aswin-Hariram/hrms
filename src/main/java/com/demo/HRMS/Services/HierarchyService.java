@@ -5,6 +5,7 @@ import com.demo.HRMS.Repositories.EmployeeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,28 +60,55 @@ public class HierarchyService {
 
 
     @Transactional(readOnly = true)
-    public void validateReportingChain(Long employeeId, EmployeeEntity proposedManager) {
-        if (proposedManager == null) return;
-
-
-        if (employeeId != null
-                && Objects.equals(employeeId, proposedManager.getEmpID())) {
-            throw new RuntimeException("Employee cannot report to themselves");
+    public void validateReportingChain(
+            Long employeeId,
+            EmployeeEntity proposedManager
+    ) {
+        if (proposedManager == null) {
+            return;
         }
 
-        int depth = 0;
+        // Self-reporting check
+        if (employeeId != null
+                && Objects.equals(employeeId, proposedManager.getEmpID())) {
+
+            throw new IllegalArgumentException(
+                    "Employee cannot report to themselves"
+            );
+        }
+
+        Set<Long> visited = new HashSet<>();
+
         EmployeeEntity current = proposedManager;
+        int depth = 0;
 
         while (current != null) {
+
             depth++;
+
             if (depth > MAX_DEPTH) {
-                throw new RuntimeException(
+                throw new IllegalArgumentException(
                         "Reporting chain exceeds maximum depth of " + MAX_DEPTH
                 );
             }
+
+            Long currentEmployeeId = current.getEmpID();
+
+
+            if (currentEmployeeId != null
+                    && !visited.add(currentEmployeeId)) {
+
+                throw new IllegalArgumentException(
+                        "Circular reporting chain detected"
+                );
+            }
+
             if (employeeId != null
-                    && Objects.equals(current.getEmpID(), employeeId)) {
-                throw new RuntimeException("Circular reporting chain detected");
+                    && Objects.equals(currentEmployeeId, employeeId)) {
+
+                throw new IllegalArgumentException(
+                        "Circular reporting chain detected"
+                );
             }
 
             current = current.getReportToHr();

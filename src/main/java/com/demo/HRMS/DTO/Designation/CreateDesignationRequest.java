@@ -11,8 +11,6 @@ public class CreateDesignationRequest {
 
     @NotBlank(message = "Designation name must not be empty")
     private String designationName;
-    @NotNull(message = "Org ID is required")
-    private Long orgID;
     @NotNull(message = "Department ID is required")
     private Long departmentId;
 }

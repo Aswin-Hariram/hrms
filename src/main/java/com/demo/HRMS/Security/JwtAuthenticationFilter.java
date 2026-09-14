@@ -69,9 +69,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         List<GrantedAuthority> authorities = getAuthorities(emp);
 
+        AuthenticatedUser user = new AuthenticatedUser(
+                jwtService.extractID(token),
+                jwtService.extractOrg(token)
+        );
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(
-                        empId,
+                        user,
                         token,
                         authorities
                 );

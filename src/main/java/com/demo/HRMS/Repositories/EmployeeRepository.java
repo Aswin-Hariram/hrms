@@ -13,6 +13,8 @@ public interface EmployeeRepository extends JpaRepository<EmployeeEntity, Long> 
     Optional<EmployeeEntity> findByEmpEmailAndOrganisation_OrgID(
             String empEmail, Long orgID);
 
+    EmployeeEntity findByEmpEmailIgnoreCase(String email);
+
     boolean existsByEmpEmailAndOrganisation_OrgID(
             String empEmail, Long orgID);
 

@@ -27,14 +27,7 @@ public class EmployeeController {
     @Autowired
     private JwtService service;
 
-    @PreAuthorize("hasAuthority('CREATE_EMPLOYEE')")
-    @PostMapping("/createEmployee")
-    public ResponseEntity<?> createEmployee(
-            @RequestBody @Valid CreateEmployeeRequestDTO request
-    ) {
-        Map<String, Object> response = empService.createEmployee(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+
 
     @PostMapping("/reset")
     public ResponseEntity<Map<String, String>> resetPassword(
@@ -104,13 +97,15 @@ public class EmployeeController {
             Authentication authentication
     ) {
         String token = (String) authentication.getCredentials();
+        Long hr = service.extractID(token);
         Long orgId = service.extractOrg(token);
 
         Map<String, Object> response =
                 employeeCompensationService.addOrUpdateCompensation(
                         empID,
                         orgId,
-                        dto
+                        dto,
+                        hr
                 );
 
         return ResponseEntity.ok(response);

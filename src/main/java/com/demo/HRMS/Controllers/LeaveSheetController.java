@@ -1,6 +1,7 @@
 package com.demo.HRMS.Controllers;
 
 import com.demo.HRMS.DTO.EmployeesLeaveData.CreateLeaveSheetDTO;
+import com.demo.HRMS.Security.AuthenticatedUser;
 import com.demo.HRMS.Security.JwtService;
 import com.demo.HRMS.Services.LeaveSheetService;
 import jakarta.validation.Valid;
@@ -24,9 +25,11 @@ public class LeaveSheetController {
     private JwtService jwtService;
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','HR')")
-    @PostMapping("/createLeave")
-    public ResponseEntity<?> createLeave(@RequestBody @Valid CreateLeaveSheetDTO request) {
-        Map<String, Object> response = leaveSheetService.createLeave(request);
+    @PostMapping("/assignLeaves")
+    public ResponseEntity<?> createLeave(@RequestBody @Valid CreateLeaveSheetDTO request,Authentication authentication) {
+        AuthenticatedUser user = (AuthenticatedUser)  authentication.getPrincipal();
+        assert user != null;
+        Map<String, Object> response = leaveSheetService.assignLeave(request,user.employeeId(),user.organisationId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

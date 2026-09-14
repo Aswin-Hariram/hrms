@@ -23,6 +23,7 @@ public class LeaveSheetResponseDTO {
     private String leaveCode;
     private boolean isPaid;
     private int allocatedDays;
+    private  boolean isApprovalReq;
     private int usedDays;
     private int remainingDays;
 }

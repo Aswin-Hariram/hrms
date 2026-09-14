@@ -32,25 +32,18 @@ public class DesignationService {
     }
 
     @Transactional
-    public Map<String, Object> createDesignation(CreateDesignationRequest request) {
+    public Map<String, Object> createDesignation(CreateDesignationRequest request,Long orgId) {
 
-        DepartmentEntity department = dep_repo.findById(request.getDepartmentId())
+        DepartmentEntity department = dep_repo.findByDepartmentIdAndOrganisation_OrgID(request.getDepartmentId(),orgId)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
-        OrganisationEntity organisation = org_repo.findById(request.getOrgID())
-                .orElseThrow(() -> new RuntimeException("Organisation not found"));
 
-        if (!Objects.equals(
-                department.getOrganisation().getOrgID(),
-                request.getOrgID()
-        )) {
-            throw new RuntimeException("Department does not belong to this organisation");
-        }
+
 
         if (desg_repo
                 .existsByDesignationNameIgnoreCaseAndOrganisation_OrgIDAndDepartment_DepartmentId(
                         request.getDesignationName(),
-                        request.getOrgID(),
+                        orgId,
                         request.getDepartmentId()
                 )) {
             throw new DataIntegrityViolationException("Designation already exists.");
@@ -58,10 +51,10 @@ public class DesignationService {
 
         DesignationEntity newDesignation = new DesignationEntity();
         newDesignation.setDepartment(department);
-        newDesignation.setOrganisation(organisation);
+        newDesignation.setOrganisation(department.getOrganisation());
         newDesignation.setDesignationName(request.getDesignationName());
 
-        desg_repo.save(newDesignation);
+        newDesignation = desg_repo.save(newDesignation);
 
         return Map.of(
                 "Message", "Created",

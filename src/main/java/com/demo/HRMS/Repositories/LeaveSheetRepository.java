@@ -2,7 +2,9 @@ package com.demo.HRMS.Repositories;
 
 import com.demo.HRMS.Entities.LeaveSheetEntity;
 import com.demo.HRMS.Types.LeaveTypesCodes;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -22,7 +24,7 @@ public interface LeaveSheetRepository extends JpaRepository<LeaveSheetEntity,Lon
 
 
 
-
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<LeaveSheetEntity> findByLeaveType_LeaveCodeAndOrganisation_OrgIDAndEmployee_EmpID(
             String leaveCode,
             Long orgID,

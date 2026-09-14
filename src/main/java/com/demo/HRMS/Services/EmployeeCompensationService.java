@@ -108,17 +108,20 @@ public class EmployeeCompensationService {
     public Map<String, Object> addOrUpdateCompensation(
             Long empID,
             Long orgId,
-            EmployeeCompensationDTO dto
-    ) {
+            EmployeeCompensationDTO dto,
+            Long hr) {
 
         EmployeeEntity employee = employeeRepository
                 .findByEmpIDAndOrganisation_OrgID(empID, orgId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
+        if(!hierarchyService.isDirectManagerOf(hr,employee)){
+            throw new RuntimeException("You dont have access to perform this operation");
+        }
         validatePayType(employee.getEmpType(), dto.getPayType());
         validateCompensation(dto);
 
-        // Deactivate the current active revision (if any)
+
         Optional<EmployeeCompensationEntity> existing =
                 compensationRepository.findByEmployee_EmpIDAndActiveTrue(empID);
 

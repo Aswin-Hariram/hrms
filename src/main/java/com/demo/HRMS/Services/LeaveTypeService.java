@@ -32,10 +32,10 @@ public class LeaveTypeService {
 
 
     @Transactional
-    public Map<String, Object> createLeaveType(CreateLeaveTypeDTO request) {
+    public Map<String, Object> createLeaveType(CreateLeaveTypeDTO request, Long orgId) {
 
         OrganisationEntity organisation = organisationRepository
-                .findById(request.getOrgID())
+                .findById(orgId)
                 .orElseThrow(() -> new RuntimeException("Organisation not found."));
 
         if (request.getNoDays() <= 0) {
@@ -44,21 +44,19 @@ public class LeaveTypeService {
 
         String code = normalizeAndValidateCode(request.getLeaveCode());
 
-        String name = request.getLeaveName() == null
-                ? null
-                : request.getLeaveName().trim();
+        String name = request.getLeaveName().trim();
 
-        if (name == null || name.isEmpty()) {
+        if ( name.isEmpty()) {
             throw new RuntimeException("Leave name is required");
         }
 
         if (leaveTypeRepository.existsByOrganisation_OrgIDAndLeaveNameIgnoreCase(
-                request.getOrgID(), name)) {
+                orgId, name)) {
             throw new RuntimeException("Leave type with this name already exists");
         }
 
         if (leaveTypeRepository.existsByOrganisation_OrgIDAndLeaveCodeIgnoreCase(
-                request.getOrgID(), code)) {
+                orgId, code)) {
             throw new RuntimeException("Leave type with this code already exists");
         }
 

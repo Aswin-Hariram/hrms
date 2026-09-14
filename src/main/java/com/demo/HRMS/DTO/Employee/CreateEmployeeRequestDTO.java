@@ -7,14 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateEmployeeRequestDTO {
 
-    @NotNull(message = "Organisation ID is required")
-    private Long orgID;
+
 
     @NotBlank(message = "First name is required")
     private String empFirstName;
@@ -47,8 +47,7 @@ public class CreateEmployeeRequestDTO {
     @NotBlank(message = "Employee type is required")
     private String empType;
 
-    @NotBlank(message = "Employee status is required")
-    private String empStatus;
+
 
     private Long designationId;
 

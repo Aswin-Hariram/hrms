@@ -2,6 +2,7 @@ package com.demo.HRMS.Services;
 
 import com.demo.HRMS.DTO.Employee.EmployeeLeaveReqDTO;
 import com.demo.HRMS.DTO.LeaveRequest.LeaveHistoryResponse;
+import com.demo.HRMS.DTO.LeaveRequest.RejectRequestDTO;
 import com.demo.HRMS.DTO.LeaveRequest.Response.PendingLeaveResponse;
 import com.demo.HRMS.DTO.LeaveSheet.Response.LeaveSheetResponseDTO;
 import com.demo.HRMS.Entities.EmployeeEntity;
@@ -95,12 +96,8 @@ public class LeaveRequestService {
                 .findByEmpIDAndOrganisation_OrgID(hrId, orgId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        LeaveRequestEntity request = leaveRequestRepository.findById(requestId)
+        LeaveRequestEntity request = leaveRequestRepository.findByRequestIDAndOrganisation_OrgID(requestId,orgId)
                 .orElseThrow(() -> new RuntimeException("Leave Request not found"));
-
-        if (!Objects.equals(request.getOrganisation().getOrgID(), orgId)) {
-            throw new RuntimeException("You don't have access to this request");
-        }
 
         boolean isSuperAdmin = hr.getEmpRole() == EmployeeRole.SUPER_ADMIN;
         boolean isAncestor = hierarchyService.isManagerOf(
@@ -114,8 +111,6 @@ public class LeaveRequestService {
             throw new RuntimeException("Only submitted status leaves can be approved");
         }
 
-        request.setStatus(LeaveRequestStatus.APPROVED);
-        leaveRequestRepository.save(request);
 
         LeaveSheetEntity leaveSheet = leaveSheetRepository
                 .findByLeaveType_LeaveCodeAndOrganisation_OrgIDAndEmployee_EmpID(
@@ -124,30 +119,64 @@ public class LeaveRequestService {
                         request.getEmployee().getEmpID())
                 .orElseThrow(() -> new RuntimeException("Leave not found"));
 
+        if (leaveSheet.getRemainingDays() < request.getNoOfDays()) {
+            throw new IllegalStateException(
+                    "Insufficient leave balance"
+            );
+        }
+
+        request.setApprovedBy(hr);
+        request.setStatus(LeaveRequestStatus.APPROVED);
+        leaveRequestRepository.save(request);
+
+
         leaveSheet.setUsedDays(leaveSheet.getUsedDays() + request.getNoOfDays());
         leaveSheet.setRemainingDays(leaveSheet.getRemainingDays() - request.getNoOfDays());
         leaveSheetRepository.save(leaveSheet);
 
-        EmployeeEntity employee = request.getEmployee();
-        employeeRepository.save(employee);
-
         return Map.of("message", "Leave approved");
+    }
+
+    @Transactional
+    public Map<String, Object> revokeLeave(Long requestId, Long selfId, Long orgId) {
+
+
+
+        LeaveRequestEntity request = leaveRequestRepository.findByRequestIDAndOrganisation_OrgID(requestId,orgId)
+                .orElseThrow(() -> new RuntimeException("Leave Request not found"));
+
+        boolean isSelf = Objects.equals(request.getEmployee().getEmpID(), selfId);
+
+
+        if (!isSelf) {
+            throw new RuntimeException("You don't have access to this request");
+        }
+
+        if (request.getStatus() != LeaveRequestStatus.SUBMITTED) {
+            throw new RuntimeException("Only submitted status leaves can be revoked");
+        }
+
+
+
+
+        request.setStatus(LeaveRequestStatus.CANCELLED);
+        leaveRequestRepository.save(request);
+
+
+
+        return Map.of("message", "Leave request revoked");
     }
 
 
     @Transactional
-    public Map<String, Object> rejectLeave(Long requestId, Long hrId, Long orgId, String reason) {
+    public Map<String, Object> rejectLeave(RejectRequestDTO rejectRequest, Long hrId, Long orgId) {
 
         EmployeeEntity hr = employeeRepository
                 .findByEmpIDAndOrganisation_OrgID(hrId, orgId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        LeaveRequestEntity request = leaveRequestRepository.findById(requestId)
+        LeaveRequestEntity request = leaveRequestRepository.findByRequestIDAndOrganisation_OrgID(rejectRequest.getReqId(),orgId)
                 .orElseThrow(() -> new RuntimeException("Leave Request not found"));
-
-        if (!Objects.equals(request.getOrganisation().getOrgID(), orgId)) {
-            throw new RuntimeException("You don't have access to this request");
-        }
 
         boolean isSuperAdmin = hr.getEmpRole() == EmployeeRole.SUPER_ADMIN;
         boolean isAncestor = hierarchyService.isManagerOf(
@@ -161,15 +190,13 @@ public class LeaveRequestService {
             throw new RuntimeException("Only submitted status leaves can be rejected");
         }
 
+        request.setRejectReason(rejectRequest.getReason());
         request.setStatus(LeaveRequestStatus.REJECTED);
         leaveRequestRepository.save(request);
 
-        // No days deducted on rejection — just release the active flag
-        EmployeeEntity employee = request.getEmployee();
 
-        employeeRepository.save(employee);
 
-        return Map.of("message", "Leave rejected", "reason", reason);
+        return Map.of("message", "Leave rejected", "reason", rejectRequest.getReason());
     }
 
     @Transactional
@@ -280,6 +307,7 @@ public class LeaveRequestService {
                 .empID(empId)
                 .leaveCode(leaveSheet.getLeaveType().getLeaveCode())
                 .allocatedDays(leaveSheet.getLeaveType().getNoDays())
+                .isApprovalReq(leaveSheet.getLeaveType().isApprovalRequired())
                 .usedDays(leaveSheet.getUsedDays())
                 .remainingDays(leaveSheet.getRemainingDays())
                 .build();
@@ -296,8 +324,12 @@ public class LeaveRequestService {
                 .requestedTo(employee.getReportToHr())
                 .build();
 
+
         LeaveRequestEntity savedRequest = leaveRequestRepository.save(request);
 
+        if(!request.getLeaveSheet().getLeaveType().isApprovalRequired()){
+            return approveLeave(request.getRequestID(),request.getEmployee().getReportToHr().getEmpID(),request.getOrganisation().getOrgID());
+        }
 
         return Map.of(
                 "message", "success",
