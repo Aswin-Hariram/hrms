@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VendorPaymentRepository extends JpaRepository<VendorPayment, Long> {
@@ -16,4 +17,6 @@ public interface VendorPaymentRepository extends JpaRepository<VendorPayment, Lo
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM VendorPayment p WHERE p.invoice.id = :invoiceId")
     BigDecimal sumAmountByInvoiceId(@Param("invoiceId") Long invoiceId);
+
+    Optional<VendorPayment> findTopByInvoiceIdOrderByIdDesc(Long invoiceId);
 }
